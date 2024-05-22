@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  h1 {
+    @apply text-4xl font-bold;
+  }
+  h2 {
+    @apply text-3xl font-bold;
+  }
+  h3 {
+    @apply text-2xl font-bold;
+  }
+  h4 {
+    @apply text-xl font-bold;
+  }
+  h5 {
+    @apply text-lg font-bold;
+  }
+  h6 {
+    @apply font-bold;
+  }
+  a {
+    @apply text-primary-600 underline;
+  }
+  ul {
+    @apply list-disc list-inside;
+  }
+  table,
+  th,
+  tr,
+  td {
+    @apply border border-default-400 p-1;
+  }
+  img {
+    @apply max-h-96 rounded-lg;
+  }
+}
+
+.presence-icon {
+  display: margin;
+  min-width: 0.75em;
+  max-width: 0.75em;
+  min-height: 0.75em;
+  max-height: 0.75em;
+  border-radius: 50%;
+  margin-top: 0.375em;
+}
+
+.presence-icon-in-call {
+  box-shadow: 0 0 5px 1px theme("colors.cyan.500");
+}
+
+code {
+  font-family: var(--font-mono) !important;
+}
