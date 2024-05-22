@@ -32,6 +32,6 @@ export function getUsernameColor(color?: string) {
 
 export function getBannerBackground(bannerUrl: string) {
   return bannerUrl
-    ? `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.45)), url("${bannerUrl}")`
+    ? `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url("${bannerUrl}")`
     : "";
 }

@@ -2,8 +2,9 @@
 
 import ChatInput from "@/components/ChatInput";
 import ChatMessageElement from "@/components/ChatMessageElement";
+import KeybindsModal from "@/components/KeybindsModal";
 import MyUser from "@/components/MyUser";
-import UserList from "@/components/UserList";
+import UserElement from "@/components/UserElement";
 import Login from "@/components/login";
 import api from "@/lib/api";
 import emojis from "@/types/Emojis";
@@ -23,8 +24,10 @@ import {
   MicOff,
 } from "@mui/icons-material";
 import { Button } from "@nextui-org/button";
+import { useDisclosure } from "@nextui-org/modal";
 import { ScrollShadow } from "@nextui-org/scroll-shadow";
 import { Spinner } from "@nextui-org/spinner";
+import { Tooltip } from "@nextui-org/tooltip";
 import clsx from "clsx";
 import moment from "moment";
 import Peer from "peerjs";
@@ -68,13 +71,18 @@ export default function Home() {
   // Peer Info
   const [peer, setPeer] = useState<Peer>();
   const [localStream, setLocalStream] = useState<MediaStream>();
-  const [remoteStreams, setRemoteStreams] = useState<
-    Record<string, MediaStream>
-  >({});
-  const [remoteAudios, setRemoteAudios] = useState<
-    Record<string, HTMLAudioElement>
-  >({});
-  const [peerUserIds, setPeerUserIds] = useState<Record<string, string>>({});
+  const [audioStreams, setAudioStreams] = useState<Record<string, MediaStream>>(
+    {},
+  );
+  const [audios, setAudios] = useState<Record<string, HTMLAudioElement>>({});
+  const [userPeerIds, setUserPeerIds] = useState<Record<string, string>>({});
+
+  // Keybinds Modal
+  const {
+    isOpen: keybindsIsOpen,
+    onOpen: keybindsOnOpen,
+    onClose: keybindsOnClose,
+  } = useDisclosure();
 
   // Refs
   const chatInputTextarea = useRef<HTMLTextAreaElement>(null);
@@ -88,12 +96,12 @@ export default function Home() {
     socket.send(JSON.stringify({ sessionToken, action, data }));
   }
 
-  // Play remote streams from peers
-  function addRemoteAudio(peerId: string, remoteStream: MediaStream) {
+  function addAudio(peerId: string, remoteStream: MediaStream) {
+    // Play remote streams from peers
     const audio = new Audio();
     audio.srcObject = remoteStream;
-    audio.autoplay = true;
-    setRemoteAudios({ ...remoteAudios, [peerId]: audio });
+    audio.autoplay = peerId !== "me";
+    setAudios((prev) => ({ ...prev, [peerId]: audio }));
   }
 
   // Load sound effects
@@ -107,7 +115,9 @@ export default function Home() {
     ]);
     setJoinSound(new Audio("/join.flac"));
     setLeaveSound(new Audio("/leave.flac"));
-    setRingtone(new Audio("/ringtone.flac"));
+    const ringtone = new Audio("/ringtone.flac");
+    ringtone.onpause = () => setRingtoneIsPaused(true);
+    setRingtone(ringtone);
     setPeer(
       new Peer({
         host: "localhost",
@@ -195,6 +205,9 @@ export default function Home() {
         } else if (e.key === "m") {
           e.preventDefault();
           setIsDeafened((prev) => !prev);
+        } else if (e.key === "?") {
+          e.preventDefault();
+          keybindsOnOpen();
         }
       } else if (modifierKey.current === "g") {
         if (e.key === "g") {
@@ -232,10 +245,17 @@ export default function Home() {
   // Register peerjs call handler
   useEffect(() => {
     if (peer) {
+      peer.on("connection", (conn) => {
+        conn.on("data", (data: any) => {
+          if (data?.userId) {
+            setUserPeerIds((prev) => ({ ...prev, [data.userId]: conn.peer }));
+          }
+        });
+      });
       peer.on("call", (call) => {
         call.on("stream", (remoteStream) => {
-          setRemoteStreams({ ...remoteStreams, [call.peer]: remoteStream });
-          addRemoteAudio(call.peer, remoteStream);
+          setAudioStreams((prev) => ({ ...prev, [call.peer]: remoteStream }));
+          addAudio(call.peer, remoteStream);
         });
         call.answer(localStream);
       });
@@ -290,7 +310,7 @@ export default function Home() {
           setLoadedMessages(true);
           setMessagesOffset(data.start);
         } else if (action === Action.UpdateMyUserInfo) {
-          // All of this shit just to determine when to play and pause the damn ringtone
+          // All of this shit just to determine when to play some damn sounds
           const oldPresence = users[userId]?.presence;
           if (
             ringtone &&
@@ -298,6 +318,15 @@ export default function Home() {
             (oldPresence === Presence.InCall || // Someone left the call
               data.presence === Presence.InCall) // Someone joined the call
           ) {
+            if (isInCall && oldPresence === Presence.InCall && leaveSound) {
+              leaveSound.currentTime = 0;
+              leaveSound.play();
+            }
+            if (isInCall && data.presence === Presence.InCall && joinSound) {
+              joinSound.currentTime = 0;
+              joinSound.play();
+            }
+
             let numUsersInCall = 0;
             for (const uid in users) {
               if (users[uid].presence === Presence.InCall) {
@@ -324,20 +353,33 @@ export default function Home() {
           setUsers(msg.data.users);
         } else if (action === Action.JoinCall) {
           if (isInCall && localStream && peer && data.peerId !== peer.id) {
+            // Send userId to peer
+            const conn = peer.connect(data.peerId);
+            conn.on("open", () => conn.send({ userId: myUserId }));
+            // Call peer
             const call = peer.call(data.peerId, localStream);
             call.on("stream", (remoteStream) => {
-              setRemoteStreams({
-                ...remoteStreams,
+              setAudioStreams({
+                ...audioStreams,
                 [call.peer]: remoteStream,
               });
-              addRemoteAudio(call.peer, remoteStream);
+              addAudio(call.peer, remoteStream);
             });
-            setPeerUserIds({ ...peerUserIds, [data.peerId]: userId });
+            setUserPeerIds({ ...userPeerIds, [userId]: data.peerId });
           }
         }
       }
     };
-  }, [socket.readyState, myUserId, isInCall, localStream, peer, users]);
+  }, [
+    socket.readyState,
+    myUserId,
+    isInCall,
+    localStream,
+    peer,
+    users,
+    leaveSound,
+    joinSound,
+  ]);
 
   // Send some initial actions upon connecting
   useEffect(() => {
@@ -454,88 +496,197 @@ export default function Home() {
           video: false,
           audio: true,
         })
-        .then(setLocalStream);
+        .then((localStream) => {
+          setLocalStream(localStream);
+          setUserPeerIds((prev) => ({ ...prev, [myUserId]: "me" }));
+          setAudioStreams((prev) => ({ ...prev, me: localStream }));
+          addAudio("me", localStream);
+        });
       send(Action.JoinCall, { peerId: peer.id });
       send(Action.UpdateMyUserInfo, { ...myUser, presence: Presence.InCall });
     } else {
+      if (ringtone) {
+        setRingtoneIsPaused(true);
+      }
       if (leaveSound) {
         leaveSound.currentTime = 0;
         leaveSound.play();
       }
-      if (ringtone) {
-        setRingtoneIsPaused(true);
-      }
       localStream?.getTracks().forEach((track) => track.stop());
-      for (const peerId in remoteStreams) {
-        const remoteStream = remoteStreams[peerId];
+      for (const peerId in audioStreams) {
+        const remoteStream = audioStreams[peerId];
         remoteStream.getTracks().forEach((track) => track.stop());
       }
-      setRemoteStreams({});
+      setAudioStreams({});
+      setAudios({});
+      setLocalStream(undefined);
       send(Action.UpdateMyUserInfo, { ...myUser, presence: Presence.Online });
     }
   }, [isInCall]);
+
+  useEffect(() => {
+    localStream
+      ?.getTracks()
+      .forEach((track) => (track.enabled = !isMuted && !isDeafened));
+    Object.entries(audioStreams).forEach(([peerId, audioStream]) => {
+      if (peerId !== "me") {
+        audioStream
+          .getTracks()
+          .forEach((track) => (track.enabled = !isDeafened));
+      }
+    });
+  }, [isMuted, isDeafened]);
 
   if (sessionToken && connected) {
     return (
       <div className="flex w-full">
         <div className="bg-content2 flex flex-col min-w-[270px] max-w-[270px]">
-          <UserList users={users} />
-          {myUser && peer && (
-            <div className="flex gap-3 pt-1 justify-center bg-content1 rounded-t-xl">
-              <Button
-                isIconOnly
-                size="md"
-                color="primary"
-                variant="solid"
-                isDisabled={isInCall}
-                className={clsx(
-                  "text-foreground",
-                  !isInCall && !ringtoneIsPaused && "bg-green-500",
+          <ScrollShadow
+            hideScrollBar
+            size={20}
+            className="flex-grow flex flex-col"
+          >
+            {Object.entries(
+              Object.entries(users).reduce(
+                // Group users by their presence
+                (byPresence: any, [userId, user]) => {
+                  let g = "offline";
+                  if (user.presence === Presence.InCall) {
+                    g = "in call";
+                  } else if (
+                    user.presence === Presence.Online ||
+                    user.presence === Presence.Away
+                  ) {
+                    g = "online";
+                  } else if (!user.changedUsername) {
+                    g = "offline (unnamed)";
+                  }
+                  byPresence[g].push([userId, user]);
+                  return byPresence;
+                },
+                {
+                  "in call": [],
+                  online: [],
+                  offline: [],
+                  "offline (unnamed)": [],
+                },
+              ),
+            ).map(([g, group]: [string, any]) => (
+              // Header for each group
+              <div key={`users_${g}`} className="flex flex-col">
+                {group.length > 0 && (
+                  <strong className="text-default-500 ml-1">
+                    <small>{g}</small>
+                  </strong>
                 )}
-                onPress={() => setIsInCall(true)}
-              >
-                <Call />
-              </Button>
-              <Button
-                isIconOnly
-                size="md"
-                color={
-                  isInCall || (!isInCall && !ringtoneIsPaused)
-                    ? "danger"
-                    : "primary"
-                }
-                variant="solid"
-                isDisabled={!isInCall && ringtoneIsPaused}
-                className="text-foreground"
-                onPress={() => {
-                  setRingtoneIsPaused(true);
-                  setIsInCall(false);
-                }}
-              >
-                <CallEnd />
-              </Button>
-              <Button
-                isIconOnly
-                size="md"
-                radius="full"
-                color={isMuted || isDeafened ? "default" : "primary"}
-                variant="solid"
-                isDisabled={!isInCall || isDeafened}
-                onPress={() => setIsMuted(!isMuted)}
-              >
-                {isMuted || isDeafened ? <MicOff /> : <Mic />}
-              </Button>
-              <Button
-                isIconOnly
-                size="md"
-                radius="full"
-                color={isDeafened ? "default" : "primary"}
-                variant="solid"
-                isDisabled={!isInCall}
-                onPress={() => setIsDeafened(!isDeafened)}
-              >
-                {isDeafened ? <HeadsetOff /> : <Headset />}
-              </Button>
+                {group
+                  // Sort by username
+                  .sort((a: any, b: any) =>
+                    a[1].username.localeCompare(b[1].username),
+                  )
+                  .map(([userId, user]: any) => (
+                    <UserElement
+                      key={`user_${userId}`}
+                      user={user}
+                      audio={
+                        userPeerIds[userId]
+                          ? audios[userPeerIds[userId]]
+                          : undefined
+                      }
+                      isCalling={
+                        userId === myUserId && !ringtoneIsPaused && isInCall
+                      }
+                    ></UserElement>
+                  ))}
+              </div>
+            ))}
+          </ScrollShadow>
+          {myUser && peer && (
+            <div
+              className="bg-content1 !bg-cover bg-off-center"
+              // style={{ background: getBannerBackground(myUser.bannerUrl) }}
+            >
+              <div className="flex gap-2 py-1 justify-center">
+                <Tooltip disableAnimation closeDelay={0} content="Join Call">
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    color="success"
+                    variant={!isInCall && !ringtoneIsPaused ? "solid" : "light"}
+                    isDisabled={isInCall}
+                    className={clsx(
+                      "text-foreground",
+                      !isInCall &&
+                        !ringtoneIsPaused &&
+                        "bg-green-500 animate-pulse",
+                    )}
+                    onPress={() => setIsInCall(true)}
+                  >
+                    <Call />
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  disableAnimation
+                  closeDelay={0}
+                  content={
+                    !isInCall && !ringtoneIsPaused ? "Decline Call" : "End Call"
+                  }
+                >
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    color="danger"
+                    variant={isInCall || !ringtoneIsPaused ? "solid" : "light"}
+                    isDisabled={!isInCall && ringtoneIsPaused}
+                    className={clsx(
+                      "text-foreground",
+                      !isInCall && !ringtoneIsPaused && "animate-pulse",
+                    )}
+                    onPress={() => {
+                      setRingtoneIsPaused(true);
+                      setIsInCall(false);
+                    }}
+                  >
+                    <CallEnd />
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  disableAnimation
+                  closeDelay={0}
+                  content={isMuted ? "Unmute" : "Mute"}
+                >
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    radius="full"
+                    color={
+                      !isInCall || isMuted || isDeafened ? "default" : "primary"
+                    }
+                    variant={isInCall ? "solid" : "light"}
+                    isDisabled={!isInCall || isDeafened}
+                    onPress={() => setIsMuted(!isMuted)}
+                  >
+                    {isMuted || isDeafened ? <MicOff /> : <Mic />}
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  disableAnimation
+                  closeDelay={0}
+                  content={isDeafened ? "Undeafen" : "Deafen"}
+                >
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    radius="full"
+                    color={!isInCall || isDeafened ? "default" : "primary"}
+                    variant={isInCall ? "solid" : "light"}
+                    isDisabled={!isInCall}
+                    onPress={() => setIsDeafened(!isDeafened)}
+                  >
+                    {isDeafened ? <HeadsetOff /> : <Headset />}
+                  </Button>
+                </Tooltip>
+              </div>
             </div>
           )}
           {myUser && <MyUser myUser={myUser} send={send} />}
@@ -603,6 +754,7 @@ export default function Home() {
             />
           </div>
         </main>
+        <KeybindsModal isOpen={keybindsIsOpen} onClose={keybindsOnClose} />
       </div>
     );
   } else {

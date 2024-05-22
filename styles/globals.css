@@ -39,19 +39,21 @@
 }
 
 .presence-icon {
-  display: margin;
   min-width: 0.75em;
   max-width: 0.75em;
   min-height: 0.75em;
   max-height: 0.75em;
   border-radius: 50%;
-  margin-top: 0.375em;
 }
 
 .presence-icon-in-call {
-  box-shadow: 0 0 5px 1px theme("colors.cyan.500");
+  box-shadow: 0 0 4px 1px theme("colors.cyan.500");
 }
 
 code {
   font-family: var(--font-mono) !important;
+}
+
+.bg-off-center {
+  background-position: 50% calc(50% + 3rem) !important;
 }

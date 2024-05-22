@@ -1,3 +1,5 @@
+import { Moment } from "moment";
+
 export enum Action {
   NewChatMessage = 1,
   ChangeUsername,
@@ -22,6 +24,11 @@ export type ChatMessageChunk = {
   messages: ChatMessage[];
 };
 
+export type IsTalking = {
+  value: boolean;
+  time: Moment;
+};
+
 export enum Presence {
   Offline = 1,
   Online,
@@ -36,4 +43,5 @@ export type User = {
   icon: string;
   bannerUrl: string;
   usernameColor: string;
+  changedUsername: boolean;
 };

@@ -8,6 +8,7 @@ import { useDisclosure } from "@nextui-org/modal";
 import UserSettingsModal from "./UserSettingsModal";
 import Username from "./Username";
 import { getBannerBackground } from "@/styles/computed";
+import { Tooltip } from "@nextui-org/tooltip";
 
 export default function MyUser({
   myUser,
@@ -28,7 +29,7 @@ export default function MyUser({
   const editUsernameInput = useRef<HTMLInputElement>(null);
   const editStatusInput = useRef<HTMLInputElement>(null);
 
-  // PRESS S FOR SETTINGS 😎
+  // EPIC KEYBINDS 😎
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (
@@ -38,9 +39,12 @@ export default function MyUser({
         return;
       }
 
-      if (e.key === "s") {
+      if (e.key === "S") {
         e.preventDefault();
         settingsOnOpen();
+      } else if (e.key === "s") {
+        e.preventDefault();
+        setIsEditingStatus((prev) => !prev);
       }
     }
 
@@ -69,7 +73,7 @@ export default function MyUser({
 
   return (
     <div
-      className="flex items-center px-2 py-1 bg-content1 !bg-cover !bg-center"
+      className="flex items-center px-2 py-1 gap-2 bg-content1 !bg-cover !bg-center"
       style={{ background: getBannerBackground(myUser.bannerUrl) }}
     >
       <div className="flex-grow flex flex-col min-w-0">
@@ -93,7 +97,7 @@ export default function MyUser({
           ></Input>
         ) : (
           <p
-            className="text-ellipsis overflow-hidden hover:bg-content4 hover:cursor-text rounded"
+            className="text-ellipsis overflow-hidden hover:backdrop-blur-md hover:backdrop-brightness-50 hover:cursor-text rounded"
             onClick={() => setIsEditingUsername(true)}
           >
             <Username username={myUser.username} color={myUser.usernameColor} />
@@ -121,7 +125,7 @@ export default function MyUser({
             ></Input>
           ) : (
             <p
-              className="hover:bg-content4 hover:cursor-text text-ellipsis overflow-hidden flex-grow rounded"
+              className="hover:backdrop-blur-md hover:backdrop-brightness-50 hover:cursor-text text-ellipsis overflow-hidden flex-grow rounded"
               onClick={() => setIsEditingStatus(true)}
             >
               {myUser.status}
@@ -130,9 +134,11 @@ export default function MyUser({
           )}
         </div>
       </div>
-      <Button isIconOnly size="lg" variant="light" onPress={settingsOnOpen}>
-        <Settings />
-      </Button>
+      <Tooltip disableAnimation closeDelay={0} content="Settings">
+        <Button isIconOnly size="sm" variant="light" onPress={settingsOnOpen}>
+          <Settings />
+        </Button>
+      </Tooltip>
       <UserSettingsModal
         // Cursed way to get this shit to actually update the myUser prop
         key={JSON.stringify(myUser)}

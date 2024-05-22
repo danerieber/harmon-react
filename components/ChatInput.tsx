@@ -41,7 +41,13 @@ export default function ChatInput({
           }
         }}
       ></Textarea>
-      <Button isIconOnly size="lg" color="primary" onPress={sendMessage}>
+      <Button
+        isIconOnly
+        className="lg:hidden"
+        size="lg"
+        color="primary"
+        onPress={sendMessage}
+      >
         <Send />
       </Button>
     </div>

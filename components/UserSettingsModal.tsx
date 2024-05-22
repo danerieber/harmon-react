@@ -45,9 +45,9 @@ export default function UserSettingsModal({
       <ModalContent>
         {(_onClose) => (
           <>
-            <ModalHeader className="text-2xl">Settings</ModalHeader>
+            <ModalHeader className="text-lg">Settings</ModalHeader>
             <ModalBody>
-              <table className="border-none [&_*]:border-none [&_td:nth-child(1)]:font-bold [&_td:nth-child(1)]:pr-2">
+              <table className="border-none [&_*]:border-none [&_td:nth-child(1)]:pr-2">
                 <tbody>
                   <tr>
                     <td>Icon</td>
