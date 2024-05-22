@@ -120,9 +120,9 @@ export default function Home() {
     setRingtone(ringtone);
     setPeer(
       new Peer({
-        host: "localhost",
-        port: 9000,
-        path: "/",
+        host: process.env.NEXT_PUBLIC_PEER_SERVER_HOST ?? "localhost",
+        port: parseInt(process.env.NEXT_PUBLIC_PEER_SERVER_PORT ?? "9000"),
+        path: process.env.NEXT_PUBLIC_PEER_SERVER_PATH ?? "/",
       }),
     );
   }, []);

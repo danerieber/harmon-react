@@ -1,8 +1,16 @@
 import { User } from "@/types/types";
 
-const endpoint = "localhost:8080";
-const httpEndpoint = "http://" + endpoint;
-const wsEndpoint = "ws://" + endpoint + "/ws";
+const endpoint =
+  (process.env.NEXT_PUBLIC_SERVER_HOST ?? "localhost") +
+  ":" +
+  (process.env.NEXT_PUBLIC_SERVER_PORT ?? "8080");
+const httpEndpoint =
+  (process.env.NEXT_PUBLIC_SERVER_USES_HTTPS ? "https://" : "http://") +
+  endpoint;
+const wsEndpoint =
+  (process.env.NEXT_PUBLIC_SERVER_USES_HTTPS ? "wss://" : "ws://") +
+  endpoint +
+  "/ws";
 
 async function json(res: Promise<Response>) {
   const j = await (await res).json();
