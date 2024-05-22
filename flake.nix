@@ -10,7 +10,6 @@
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
             bun
-            nodejs_20
             nodePackages.pnpm
             nodePackages.typescript
             nodePackages.typescript-language-server
