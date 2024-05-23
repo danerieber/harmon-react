@@ -192,9 +192,12 @@ export default function Home() {
             setUserPeerIds((prev) => ({ ...prev, [myUserId]: "me" }));
             setAudioStreams((prev) => ({ ...prev, me: localStream }));
             addAudio("me", localStream);
+            send(Action.JoinCall, { peerId: peer.id });
+            send(Action.UpdateMyUserInfo, {
+              ...myUser,
+              presence: Presence.InCall,
+            });
           });
-        send(Action.JoinCall, { peerId: peer.id });
-        send(Action.UpdateMyUserInfo, { ...myUser, presence: Presence.InCall });
       } else {
         ringtone?.pause();
         if (leaveSound) {
@@ -348,26 +351,6 @@ export default function Home() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [changeCallStatus, keybindsOnOpen, ringtone, toggleMutedOrDeafened]);
-
-  // Register peerjs call handler
-  useEffect(() => {
-    if (peer) {
-      peer.on("connection", (conn) => {
-        conn.on("data", (data: any) => {
-          if (data?.userId) {
-            setUserPeerIds((prev) => ({ ...prev, [data.userId]: conn.peer }));
-          }
-        });
-      });
-      peer.on("call", (call) => {
-        call.on("stream", (remoteStream) => {
-          setAudioStreams((prev) => ({ ...prev, [call.peer]: remoteStream }));
-          addAudio(call.peer, remoteStream);
-        });
-        call.answer(localStream);
-      });
-    }
-  }, [localStream, peer]);
 
   useEffect(() => {
     if (!peer) return;
