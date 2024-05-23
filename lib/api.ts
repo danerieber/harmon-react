@@ -1,16 +1,20 @@
+import Environment from "@/components/Environment";
 import { User } from "@/types/types";
 
-const endpoint =
-  (process.env.NEXT_PUBLIC_SERVER_HOST ?? "localhost") +
-  ":" +
-  (process.env.NEXT_PUBLIC_SERVER_PORT ?? "8080");
-const httpEndpoint =
-  (process.env.NEXT_PUBLIC_SERVER_USES_HTTPS ? "https://" : "http://") +
-  endpoint;
-const wsEndpoint =
-  (process.env.NEXT_PUBLIC_SERVER_USES_HTTPS ? "wss://" : "ws://") +
-  endpoint +
-  "/ws";
+async function env() {
+  const endpoint =
+    (await Environment()).serverHost + ":" + (await Environment()).serverPort;
+  return {
+    endpoint,
+    httpEndpoint:
+      ((await Environment()).serverUsesHttps ? "https://" : "http://") +
+      endpoint,
+    wsEndpoint:
+      ((await Environment()).serverUsesHttps ? "wss://" : "ws://") +
+      endpoint +
+      "/ws",
+  };
+}
 
 async function json(res: Promise<Response>) {
   const j = await (await res).json();
@@ -20,20 +24,20 @@ async function json(res: Promise<Response>) {
 
 const api = {
   async register(): Promise<{ token: string }> {
-    return await json(fetch(httpEndpoint + "/register"));
+    return await json(fetch((await env()).httpEndpoint + "/register"));
   },
   async login(
     token: string,
   ): Promise<{ sessionToken: string; userId: string; user: User }> {
     return await json(
-      fetch(httpEndpoint + "/login", {
+      fetch((await env()).httpEndpoint + "/login", {
         method: "POST",
         body: JSON.stringify({ token }),
       }),
     );
   },
-  socket() {
-    return new WebSocket(wsEndpoint);
+  async socket() {
+    return new WebSocket((await env()).wsEndpoint);
   },
 };
 

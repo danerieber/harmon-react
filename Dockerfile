@@ -17,16 +17,10 @@ RUN cd /temp/prod && bun install --frozen-lockfile --production
 
 # copy node_modules from temp directory
 # then copy all (non-ignored) project files into the image
-FROM base AS prerelease
+FROM imbios/bun-node:latest-iron-alpine AS prerelease
+WORKDIR /usr/src/app
 COPY --from=install /temp/dev/node_modules node_modules
 COPY . .
-
-# install node 20 for nextjs build
-RUN apt-get update; apt-get install curl gpg -y; \
-mkdir -p /etc/apt/keyrings; \
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg; \
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list; \
-apt-get update && apt-get install -y nodejs;
 
 # [optional] tests & build
 ENV NODE_ENV=production

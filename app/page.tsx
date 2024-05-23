@@ -2,6 +2,7 @@
 
 import ChatInput from "@/components/ChatInput";
 import ChatMessageElement from "@/components/ChatMessageElement";
+import Environment from "@/components/Environment";
 import KeybindsModal from "@/components/KeybindsModal";
 import MyUser from "@/components/MyUser";
 import UserElement from "@/components/UserElement";
@@ -139,14 +140,22 @@ export default function Home() {
 
   useEffect(() => {
     if (!sessionToken) return;
-    const socket = api.socket();
-    setSocket(socket);
-    const peer = new Peer({
-      host: process.env.NEXT_PUBLIC_PEER_SERVER_HOST ?? "localhost",
-      port: parseInt(process.env.NEXT_PUBLIC_PEER_SERVER_PORT ?? "9000"),
-      path: process.env.NEXT_PUBLIC_PEER_SERVER_PATH ?? "/",
+    let socket: WebSocket, peer: Peer;
+    api.socket().then((ws) => {
+      socket = ws;
+      setSocket(ws);
     });
-    setPeer(peer);
+    Environment().then((env) => {
+      peer = new Peer({
+        host: env.peerServerHost,
+        port: env.peerServerPort,
+        path: env.peerServerPath,
+        ...(env.peerServerConfig && {
+          config: env.peerServerConfig,
+        }),
+      });
+      setPeer(peer);
+    });
     return () => {
       socket.close();
       peer.destroy();
