@@ -58,7 +58,7 @@ export default function ChatMessageElement({
       <div className="flex flex-col min-w-0">
         {showUsername && (
           <p>
-            <Username username={username || "<unkown>"} color={usernameColor} />
+            <Username color={usernameColor}>{username || "<unkown>"}</Username>
             <small className="text-default-500 pl-1">
               {formatTimestamp(msg.data.timestamp)}
             </small>

@@ -129,10 +129,9 @@ export default function UserSettingsModal({
                                   })
                                 }
                               >
-                                <Username
-                                  username={editedUser.username}
-                                  color={color}
-                                />
+                                <Username color={color}>
+                                  {editedUser.username}
+                                </Username>
                               </DropdownItem>
                             ))}
                           </DropdownMenu>

@@ -9,6 +9,7 @@ import UserSettingsModal from "./UserSettingsModal";
 import Username from "./Username";
 import { getBannerBackground } from "@/styles/computed";
 import { Tooltip } from "@nextui-org/tooltip";
+import Status from "./Status";
 
 export default function MyUser({
   myUser,
@@ -100,7 +101,7 @@ export default function MyUser({
             className="text-ellipsis overflow-hidden hover:backdrop-blur-md hover:backdrop-brightness-50 hover:cursor-text rounded"
             onClick={() => setIsEditingUsername(true)}
           >
-            <Username username={myUser.username} color={myUser.usernameColor} />
+            <Username color={myUser.usernameColor}>{myUser.username}</Username>
           </p>
         )}
         <div className="flex gap-2">
@@ -128,8 +129,7 @@ export default function MyUser({
               className="hover:backdrop-blur-md hover:backdrop-brightness-50 hover:cursor-text text-ellipsis overflow-hidden flex-grow rounded"
               onClick={() => setIsEditingStatus(true)}
             >
-              {myUser.status}
-              <span className="select-none">&nbsp;</span>
+              <Status>{myUser.status}</Status>
             </p>
           )}
         </div>

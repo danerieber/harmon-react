@@ -1,18 +1,19 @@
 import { getUsernameColor } from "@/styles/computed";
 import clsx from "clsx";
+import { ReactNode } from "react";
 
 export default function Username({
-  username,
+  children,
   color,
 }: {
-  username: string;
+  children: ReactNode;
   color?: string;
 }) {
   return (
     <strong
       className={clsx("text-ellipsis overflow-hidden", getUsernameColor(color))}
     >
-      {username}
+      {children}
     </strong>
   );
 }

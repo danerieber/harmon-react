@@ -479,6 +479,7 @@ export default function Home() {
           // All of this shit just to determine when to play some damn sounds
           const oldPresence = users[userId]?.presence;
           if (
+            userId !== data.userId &&
             ringtone &&
             oldPresence !== data.presence &&
             (oldPresence === Presence.InCall || // Someone left the call

@@ -5,6 +5,7 @@ import { getBannerBackground } from "@/styles/computed";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import moment from "moment";
+import Status from "./Status";
 
 export default function UserElement({
   user,
@@ -79,11 +80,12 @@ export default function UserElement({
         <div className="flex-grow flex flex-col min-w-0">
           <div className="flex gap-2">
             <PresenceIcon presence={user.presence} ping={isCalling} />
-            <Username username={user.username} color={user.usernameColor} />
+            <Username color={user.usernameColor}>{user.username}</Username>
           </div>
-          <p className="text-ellipsis overflow-hidden flex-grow ml-5">
-            {user.presence !== Presence.Offline ? user.status : "offline"}
-            <span className="select-none">&nbsp;</span>
+          <p className="flex-grow ml-5">
+            <Status>
+              {user.presence !== Presence.Offline ? user.status : "offline"}
+            </Status>
           </p>
         </div>
       </div>
