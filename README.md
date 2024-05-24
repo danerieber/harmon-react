@@ -46,6 +46,10 @@ bun run build
 bun run start
 ```
 
+# Deployment
+
+See [harmon-deploy](https://github.com/danerieber/harmon-deploy) for examples.
+
 # Contributing
 
 As long as you are not on an iPad editing code through the GitHub website... Go ahead and open an issue or a PR!
