@@ -34,6 +34,9 @@ export default function ChatInput({
           e.preventDefault();
           sendMessage();
         }
+           else if (e.key === "Escape") {
+            textareaRef.current?.blur();
+          }
         }}
       ></Textarea>
       <Button
