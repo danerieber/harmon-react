@@ -52,6 +52,7 @@
 
 code {
   font-family: var(--font-mono) !important;
+  white-space: pre-wrap;
 }
 
 .bg-off-center {
