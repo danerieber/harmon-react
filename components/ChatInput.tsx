@@ -30,13 +30,12 @@ export default function ChatInput({
         value={content}
         onValueChange={setContent}
         onKeyDown={(e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-        else if (e.key === "Escape") {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+          } else if (e.key === "Escape") {
             textareaRef.current?.blur();
-            }
+          }
         }}
       ></Textarea>
       <Button
