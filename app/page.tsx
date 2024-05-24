@@ -192,6 +192,20 @@ export default function Home() {
             setUserPeerIds((prev) => ({ ...prev, [myUserId]: "me" }));
             setAudioStreams((prev) => ({ ...prev, me: localStream }));
             addAudio("me", localStream);
+
+            peer.removeAllListeners("call");
+            function handleCall(call: MediaConnection) {
+              call.on("stream", (remoteStream) => {
+                setAudioStreams((prev) => ({
+                  ...prev,
+                  [call.peer]: remoteStream,
+                }));
+                addAudio(call.peer, remoteStream);
+              });
+              call.answer(localStream);
+            }
+            peer.on("call", handleCall);
+
             send(Action.JoinCall, { peerId: peer.id });
             send(Action.UpdateMyUserInfo, {
               ...myUser,
@@ -212,6 +226,9 @@ export default function Home() {
         setAudioStreams({});
         setAudios({});
         setLocalStream(undefined);
+
+        peer.removeAllListeners("call");
+
         send(Action.UpdateMyUserInfo, { ...myUser, presence: Presence.Online });
       }
     },
@@ -367,20 +384,20 @@ export default function Home() {
     };
   }, [peer]);
 
-  useEffect(() => {
-    if (!peer || !localStream) return;
-    function handleCall(call: MediaConnection) {
-      call.on("stream", (remoteStream) => {
-        setAudioStreams((prev) => ({ ...prev, [call.peer]: remoteStream }));
-        addAudio(call.peer, remoteStream);
-      });
-      call.answer(localStream);
-    }
-    peer.on("call", handleCall);
-    return () => {
-      peer.removeListener("call", handleCall);
-    };
-  }, [localStream, peer]);
+  // useEffect(() => {
+  //   if (!peer || !localStream) return;
+  //   function handleCall(call: MediaConnection) {
+  //     call.on("stream", (remoteStream) => {
+  //       setAudioStreams((prev) => ({ ...prev, [call.peer]: remoteStream }));
+  //       addAudio(call.peer, remoteStream);
+  //     });
+  //     call.answer(localStream);
+  //   }
+  //   peer.on("call", handleCall);
+  //   return () => {
+  //     peer.removeListener("call", handleCall);
+  //   };
+  // }, [localStream, peer]);
 
   const playChime = useCallback(() => {
     const i = Math.floor(Math.random() * chimes.length);
