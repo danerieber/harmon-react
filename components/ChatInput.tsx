@@ -30,10 +30,7 @@ export default function ChatInput({
         value={content}
         onValueChange={setContent}
         onKeyDown={(e) => {
-          if (
-            e.key === "Enter" &&
-            ((!e.shiftKey && !content.includes("\n")) || e.ctrlKey)
-          ) {
+          if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
           } else if (e.key === "Escape") {
