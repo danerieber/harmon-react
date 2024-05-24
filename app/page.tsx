@@ -474,7 +474,7 @@ export default function Home() {
             return [{ messages: [msg] }];
           });
           playChime();
-          if (userId === myUserId) {
+          if (userId === myUserId || isInViewport(chatMessagesDivEnd)) {
             setShouldScrollToEnd(true);
           }
         } else if (action === Action.ChangeUsername) {
