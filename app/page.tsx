@@ -522,11 +522,11 @@ export default function Home() {
             }
             if (numUsersInCall === 0 && data.presence === Presence.InCall) {
               // Someone started a new call
-              ringtone.currentTime = 0;
               ringtone.play();
             } else if (numUsersInCall === 1) {
               // Either the last person in the call left, or a second person joined
               ringtone.pause();
+              ringtone.currentTime = 0;
             }
           }
 
