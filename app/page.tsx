@@ -57,7 +57,8 @@ export default function Home() {
   >([]);
   const [chatMessagesScrollPos, setChatMessagesScrollPos] = useState(0);
   const [chatMessagesHeight, setChatMessagesHeight] = useState(0);
-  const [scrollToBottom, setScrollToBottom] = useState(true);
+  const [shouldScrollToEnd, setShouldScrollToEnd] = useState(true);
+  const [shouldKeepScrollPos, setShouldKeepScrollPos] = useState(false);
 
   // Users
   const [myUserId, setMyUserId] = useState("");
@@ -408,31 +409,28 @@ export default function Home() {
     chime.play();
   }, [chimes]);
 
-  // Scroll behavior when chatMessageChunks changes
-  const handleChatScrolling = useCallback(() => {
-    if (scrollToBottom && chatMessageChunks.length > 0) {
-      // Scroll to bottom of chat messages
-      chatMessagesDivEnd.current?.scrollIntoView();
-      setScrollToBottom(false);
-    } else {
-      // Keep current scroll position when loading new message chunks
-      chatMessagesDiv.current?.scrollTo({
-        top:
-          chatMessagesScrollPos +
-          chatMessagesDiv.current?.scrollHeight -
-          chatMessagesHeight,
-      });
-    }
-  }, [
-    chatMessageChunks.length,
-    chatMessagesHeight,
-    chatMessagesScrollPos,
-    scrollToBottom,
-  ]);
+  // Keep current scroll position when loading new message chunks
+  const keepScrollPos = useCallback(() => {
+    chatMessagesDiv.current?.scrollTo({
+      top:
+        chatMessagesScrollPos +
+        chatMessagesDiv.current?.scrollHeight -
+        chatMessagesHeight,
+    });
+  }, [chatMessagesHeight, chatMessagesScrollPos]);
 
   useEffect(() => {
-    handleChatScrolling();
-  }, [handleChatScrolling, chatMessageChunks]);
+    if (shouldScrollToEnd) {
+      chatMessagesDivEnd.current?.scrollIntoView();
+      setShouldScrollToEnd(false);
+    }
+  }, [shouldScrollToEnd]);
+
+  useEffect(() => {
+    if (shouldKeepScrollPos) {
+      keepScrollPos();
+    }
+  }, [chatMessageChunks.length, keepScrollPos, shouldKeepScrollPos]);
 
   // Send some initial actions upon connecting
   const handleSocketOnOpen = useCallback(() => {
@@ -476,6 +474,9 @@ export default function Home() {
             return [{ messages: [msg] }];
           });
           playChime();
+          if (userId === myUserId) {
+            setShouldScrollToEnd(true);
+          }
         } else if (action === Action.ChangeUsername) {
           if (userId === myUserId) {
             setMyUser((prev) =>
@@ -489,6 +490,11 @@ export default function Home() {
         } else if (action === Action.RequestUserInfo) {
           setUsers((prev) => ({ ...prev, ...{ [data.userId]: data.user } }));
         } else if (action === Action.GetChatMessages) {
+          if (chatMessageChunks.length === 0) {
+            setShouldScrollToEnd(true);
+          } else {
+            setShouldKeepScrollPos(true);
+          }
           setChatMessageChunks((prev) => [data, ...prev]);
           setLoadedMessages(true);
           setMessagesOffset(data.start);
@@ -556,6 +562,7 @@ export default function Home() {
       }
     },
     [
+      chatMessageChunks.length,
       isInCall,
       joinSound,
       leaveSound,
@@ -600,7 +607,6 @@ export default function Home() {
       let msg = content.trim();
       if (msg) {
         send(Action.NewChatMessage, { content });
-        setScrollToBottom(true);
       }
     },
     [send],
