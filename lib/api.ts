@@ -49,6 +49,9 @@ const api = {
       body: image,
     });
   },
+  async getEndpoint() {
+    return (await env()).httpEndpoint;
+  },
   async socket() {
     return new WebSocket((await env()).wsEndpoint);
   },

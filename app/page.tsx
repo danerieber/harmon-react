@@ -624,20 +624,10 @@ export default function Home() {
   const imgToUrl = async (img: ArrayBuffer, filetype: string) => {
     const res = await api.imageUpload(img, filetype, sessionToken);
     const imageName = await res.text();
-
-
-    let endpoint = "";
-
-    // Alright I can't be the only one who thinks this is a bit cursed
-    await Environment().then((env) => {
-      const protocol = env.serverUsesHttps ? "https" : "http";
-      endpoint =
-        protocol + "://" + env.serverHost + ":" + env.serverPort + "/image/" + imageName;
-    });
+    const endpoint = await api.getEndpoint() + "/image/" + imageName;
 
     return new URL(endpoint);
   };
-
 
   // Load more chat messages when the user scrolls to the top
   const loadMoreMessages = useCallback(() => {
