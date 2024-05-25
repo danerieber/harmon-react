@@ -3,7 +3,7 @@ import { Button } from "@nextui-org/button";
 import PresenceIcon from "./PresenceIcon";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@nextui-org/input";
-import { Action, User } from "@/types/types";
+import { Action, MySettings, User } from "@/types/types";
 import { useDisclosure } from "@nextui-org/modal";
 import UserSettingsModal from "./UserSettingsModal";
 import Username from "./Username";
@@ -13,9 +13,11 @@ import Status from "./Status";
 
 export default function MyUser({
   myUser,
+  mySettings,
   send,
 }: {
   myUser: User;
+  mySettings: MySettings | undefined;
   send: (action: Action, data: any) => void;
 }) {
   const {
@@ -53,7 +55,7 @@ export default function MyUser({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [settingsOnOpen]);
 
   function editUser(updated: User) {
     send(Action.UpdateMyUserInfo, updated);
@@ -141,11 +143,13 @@ export default function MyUser({
       </Tooltip>
       <UserSettingsModal
         // Cursed way to get this shit to actually update the myUser prop
-        key={JSON.stringify(myUser)}
+        key={JSON.stringify(myUser) + JSON.stringify(mySettings)}
         myUser={myUser}
         editUser={editUser}
         isOpen={settingsIsOpen}
         onClose={settingsOnClose}
+        mySettings={mySettings}
+        send={send}
       />
     </div>
   );

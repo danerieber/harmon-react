@@ -20,6 +20,7 @@
     "@nextui-org/popover": "^2.1.21",
     "@nextui-org/scroll-shadow": "^2.1.16",
     "@nextui-org/spinner": "^2.0.28",
+    "@nextui-org/switch": "^2.0.28",
     "@nextui-org/tooltip": "^2.0.33",
     "@react-aria/ssr": "^3.9.2",
     "@react-aria/visually-hidden": "^3.8.10",

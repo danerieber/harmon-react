@@ -1,5 +1,5 @@
 import emojis from "@/types/Emojis";
-import { User } from "@/types/types";
+import { Action, MySettings, User } from "@/types/types";
 import { Button } from "@nextui-org/button";
 import { Input } from "@nextui-org/input";
 import {
@@ -17,28 +17,41 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@nextui-org/dropdown";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { getUsernameColor, usernameColors } from "@/styles/computed";
 import Username from "./Username";
 import { Casino } from "@mui/icons-material";
+import { Switch } from "@nextui-org/switch";
 
 export default function UserSettingsModal({
   myUser,
   editUser,
   isOpen,
   onClose,
+  mySettings,
+  send,
 }: {
   myUser: User;
   editUser: (user: User) => void;
   isOpen: boolean;
   onClose: () => void;
+  mySettings: MySettings | undefined;
+  send: (action: Action, data: any) => void;
 }) {
   const [editedUser, setEditedUser] = useState<User>(myUser);
+  const [editedSettings, setEditedSettings] = useState<MySettings | undefined>(
+    mySettings,
+  );
 
-  function saveOnClose() {
-    editUser(editedUser);
-    onClose();
+  function mergeSettings(updated: MySettings) {
+    setEditedSettings((prev) => (prev ? { ...prev, ...updated } : updated));
   }
+
+  const saveOnClose = useCallback(() => {
+    editUser(editedUser);
+    send(Action.UpdateMySettings, editedSettings);
+    onClose();
+  }, [editUser, editedSettings, editedUser, onClose, send]);
 
   return (
     <Modal isOpen={isOpen} onClose={saveOnClose} size="2xl">
@@ -46,8 +59,9 @@ export default function UserSettingsModal({
         {(_onClose) => (
           <>
             <ModalHeader className="text-lg">Settings</ModalHeader>
-            <ModalBody>
-              <table className="border-none [&_*]:border-none [&_td:nth-child(1)]:pr-2">
+            <ModalBody className="[&_*]:border-none [&_td:nth-child(1)]:pr-2">
+              <strong>Profile</strong>
+              <table>
                 <tbody>
                   <tr>
                     <td>Icon</td>
@@ -148,6 +162,67 @@ export default function UserSettingsModal({
                           setEditedUser({ ...editedUser, bannerUrl })
                         }
                       />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <strong>Audio</strong>
+              <table>
+                <tbody>
+                  <tr>
+                    <td>Auto Gain Control</td>
+                    <td>
+                      <Switch
+                        defaultSelected={
+                          editedSettings?.audioSettings.autoGainControl === true
+                        }
+                        onValueChange={(v) =>
+                          mergeSettings({
+                            audioSettings: {
+                              ...editedSettings?.audioSettings,
+                              autoGainControl: v,
+                            },
+                          })
+                        }
+                      ></Switch>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Echo Cancellation</td>
+                    <td>
+                      <Switch
+                        defaultSelected={
+                          editedSettings?.audioSettings.echoCancellation ===
+                          true
+                        }
+                        onValueChange={(v) =>
+                          mergeSettings({
+                            audioSettings: {
+                              ...editedSettings?.audioSettings,
+                              echoCancellation: v,
+                            },
+                          })
+                        }
+                      ></Switch>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Noise Suppression</td>
+                    <td>
+                      <Switch
+                        defaultSelected={
+                          editedSettings?.audioSettings.noiseSuppression ===
+                          true
+                        }
+                        onValueChange={(v) =>
+                          mergeSettings({
+                            audioSettings: {
+                              ...editedSettings?.audioSettings,
+                              noiseSuppression: v,
+                            },
+                          })
+                        }
+                      ></Switch>
                     </td>
                   </tr>
                 </tbody>

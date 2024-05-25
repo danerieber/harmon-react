@@ -8,6 +8,8 @@ export enum Action {
   UpdateMyUserInfo,
   GetAllUsers,
   JoinCall,
+  GetMySettings,
+  UpdateMySettings,
 }
 
 export type ChatMessage = {
@@ -27,6 +29,10 @@ export type ChatMessageChunk = {
 export type IsTalking = {
   value: boolean;
   time: Moment;
+};
+
+export type MySettings = {
+  audioSettings: MediaTrackConstraints;
 };
 
 export enum Presence {

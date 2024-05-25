@@ -13,6 +13,7 @@ import {
   Action,
   ChatMessage,
   ChatMessageChunk,
+  MySettings,
   Presence,
   User,
 } from "@/types/types";
@@ -62,6 +63,7 @@ export default function Home() {
 
   // Users
   const [myUserId, setMyUserId] = useState("");
+  const [mySettings, setMySettings] = useState<MySettings | undefined>();
   const [myUser, setMyUser] = useState<User | undefined>();
   const [users, setUsers] = useState<Record<string, User>>({});
 
@@ -186,7 +188,7 @@ export default function Home() {
         navigator.mediaDevices
           .getUserMedia({
             video: false,
-            audio: true,
+            audio: mySettings?.audioSettings ?? true,
           })
           .then((localStream) => {
             setLocalStream(localStream);
@@ -239,6 +241,7 @@ export default function Home() {
       joinSound,
       leaveSound,
       localStream,
+      mySettings?.audioSettings,
       myUser,
       myUserId,
       peer,
@@ -443,6 +446,7 @@ export default function Home() {
         presence: Presence.Online,
         icon: myUser.icon || emojis[Math.floor(Math.random() * emojis.length)],
       });
+      send(Action.GetMySettings, {});
     }
   }, [myUser, send]);
 
@@ -559,6 +563,10 @@ export default function Home() {
             });
             setUserPeerIds((prev) => ({ ...prev, [userId]: data.peerId }));
           }
+        } else if (action === Action.GetMySettings) {
+          setMySettings(data);
+        } else if (action === Action.UpdateMySettings) {
+          setMySettings(data);
         }
       }
     },
@@ -806,7 +814,9 @@ export default function Home() {
               </div>
             </div>
           )}
-          {myUser && <MyUser myUser={myUser} send={send} />}
+          {myUser && (
+            <MyUser myUser={myUser} mySettings={mySettings} send={send} />
+          )}
         </div>
         <main className="bg-content3 flex flex-col min-w-0 w-full">
           <ScrollShadow
