@@ -1,0 +1,22 @@
+name: deploy to server
+on:
+  workflow_run:
+    workflows: ['Push to GHCR']
+    types: [completed]
+    branches:
+      - main
+jobs:
+  build:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: pull image and restart service
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          docker pull ghcr.io/danerieber/harmon-react:latest
+          sudo systemctl restart docker-harmon-react.service
