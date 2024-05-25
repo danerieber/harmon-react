@@ -10,7 +10,7 @@ export default function ChatInput({
 }: {
   sendNewChatMessage: (content: string) => void;
   textareaRef: RefObject<HTMLTextAreaElement>;
-  imgToUrl: (img: ArrayBuffer) => Promise<URL>;
+  imgToUrl: (img: ArrayBuffer, filetype: string) => Promise<URL>;
 }) {
   const [content, setContent] = useState("");
 
@@ -30,11 +30,10 @@ export default function ChatInput({
 
   async function handlePaste(e: React.ClipboardEvent) {
     const clipboardData = e.clipboardData;
-    const file = clipboardData.files[0]; // Get the first file (if available)
+    const file = clipboardData.files[0]; // Get only first file (if available)
     if (file && file.type.startsWith('image/')) {
       const imageBinary: ArrayBuffer = await readFileDataAsBase64(file);
-
-      const imageUrl = await imgToUrl(imageBinary);
+      const imageUrl = await imgToUrl(imageBinary, file.type.split('/')[1]);
 
       const newContent = `${textareaRef.current?.value}![Pasted Image](${imageUrl})`;
       setContent(newContent);
@@ -57,8 +56,7 @@ export default function ChatInput({
         reject(err);
       };
 
-      // reader.readAsDataURL(file); <- BASE64
-      reader.readAsArrayBuffer(file);
+      reader.readAsArrayBuffer(file); // Read in binary
     });
   }
 

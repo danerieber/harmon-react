@@ -36,8 +36,12 @@ const api = {
       }),
     );
   },
-  async imageUpload(image: ArrayBuffer, stoken: string): Promise<Response> {
-    return await fetch((await env()).httpEndpoint + "/image/name.png", {
+  async imageUpload(
+    image: ArrayBuffer,
+    filetype: string,
+    stoken: string,
+  ): Promise<Response> {
+    return await fetch((await env()).httpEndpoint + "/image/name." + filetype, {
       method: "POST",
       headers: {
         Authorization: `${stoken}`,

@@ -621,9 +621,10 @@ export default function Home() {
     );
   }
 
-  const imgToUrl = async (img: ArrayBuffer) => {
-    const res = await api.imageUpload(img, sessionToken);
+  const imgToUrl = async (img: ArrayBuffer, filetype: string) => {
+    const res = await api.imageUpload(img, filetype, sessionToken);
     const imageName = await res.text();
+
 
     let endpoint = "";
 
