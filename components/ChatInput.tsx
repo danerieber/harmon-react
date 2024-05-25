@@ -6,15 +6,60 @@ import { RefObject, useState } from "react";
 export default function ChatInput({
   sendNewChatMessage,
   textareaRef,
+  imgToUrl,
 }: {
   sendNewChatMessage: (content: string) => void;
   textareaRef: RefObject<HTMLTextAreaElement>;
+  imgToUrl: (img: ArrayBuffer) => Promise<URL>;
 }) {
   const [content, setContent] = useState("");
 
   function sendMessage() {
     sendNewChatMessage(content);
     setContent("");
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.code === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    } else if (e.code === "Escape") {
+      textareaRef.current?.blur();
+    }
+  }
+
+  async function handlePaste(e: React.ClipboardEvent) {
+    const clipboardData = e.clipboardData;
+    const file = clipboardData.files[0]; // Get the first file (if available)
+    if (file && file.type.startsWith('image/')) {
+      const imageBinary: ArrayBuffer = await readFileDataAsBase64(file);
+
+      const imageUrl = await imgToUrl(imageBinary);
+
+      const newContent = `${textareaRef.current?.value}![Pasted Image](${imageUrl})`;
+      setContent(newContent);
+    }
+  }
+
+  function readFileDataAsBase64(file: File): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        if (event.target) {
+          resolve(event.target.result as ArrayBuffer);
+        } else {
+          reject(new Error("File reading failed"));
+        }
+      };
+
+      reader.onerror = (err) => {
+        reject(err);
+      };
+
+      // reader.readAsDataURL(file); <- BASE64
+      reader.readAsArrayBuffer(file);
+    });
   }
 
   return (
@@ -29,14 +74,8 @@ export default function ChatInput({
         maxLength={2069}
         value={content}
         onValueChange={setContent}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-          } else if (e.key === "Escape") {
-            textareaRef.current?.blur();
-          }
-        }}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
       ></Textarea>
       <Button
         isIconOnly

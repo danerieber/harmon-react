@@ -36,6 +36,15 @@ const api = {
       }),
     );
   },
+  async imageUpload(image: ArrayBuffer, stoken: string): Promise<Response> {
+    return await fetch((await env()).httpEndpoint + "/image/name.png", {
+      method: "POST",
+      headers: {
+        Authorization: `${stoken}`,
+      },
+      body: image,
+    });
+  },
   async socket() {
     return new WebSocket((await env()).wsEndpoint);
   },

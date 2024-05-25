@@ -308,9 +308,9 @@ export default function Home() {
               top:
                 div.scrollTop -
                 2 *
-                  parseFloat(
-                    getComputedStyle(div, null).getPropertyValue("font-size"),
-                  ),
+                parseFloat(
+                  getComputedStyle(div, null).getPropertyValue("font-size"),
+                ),
             });
           }
         } else if (e.key === "j") {
@@ -321,9 +321,9 @@ export default function Home() {
               top:
                 div.scrollTop +
                 2 *
-                  parseFloat(
-                    getComputedStyle(div, null).getPropertyValue("font-size"),
-                  ),
+                parseFloat(
+                  getComputedStyle(div, null).getPropertyValue("font-size"),
+                ),
             });
           }
         } else if (e.key === "G") {
@@ -452,7 +452,7 @@ export default function Home() {
         let msg: any;
         try {
           msg = JSON.parse(msgText);
-        } catch (e) {}
+        } catch (e) { }
 
         // Uncomment for debugging
         console.log(msg);
@@ -621,6 +621,23 @@ export default function Home() {
     );
   }
 
+  const imgToUrl = async (img: ArrayBuffer) => {
+    const res = await api.imageUpload(img, sessionToken);
+    const imageName = await res.text();
+
+    let endpoint = "";
+
+    // Alright I can't be the only one who thinks this is a bit cursed
+    await Environment().then((env) => {
+      const protocol = env.serverUsesHttps ? "https" : "http";
+      endpoint =
+        protocol + "://" + env.serverHost + ":" + env.serverPort + "/image/" + imageName;
+    });
+
+    return new URL(endpoint);
+  };
+
+
   // Load more chat messages when the user scrolls to the top
   const loadMoreMessages = useCallback(() => {
     if (
@@ -711,7 +728,7 @@ export default function Home() {
           {myUser && peer && (
             <div
               className="bg-content1 !bg-cover bg-off-center"
-              // style={{ background: getBannerBackground(myUser.bannerUrl) }}
+            // style={{ background: getBannerBackground(myUser.bannerUrl) }}
             >
               <div className="flex gap-2 py-1 justify-center">
                 <Tooltip disableAnimation closeDelay={0} content="Join Call">
@@ -728,8 +745,8 @@ export default function Home() {
                     className={clsx(
                       "text-foreground",
                       !isInCall &&
-                        !(ringtone?.paused ?? true) &&
-                        "bg-green-500 animate-pulse",
+                      !(ringtone?.paused ?? true) &&
+                      "bg-green-500 animate-pulse",
                     )}
                     onPress={() => changeCallStatus(true)}
                   >
@@ -758,8 +775,8 @@ export default function Home() {
                     className={clsx(
                       "text-foreground",
                       !isInCall &&
-                        !(ringtone?.paused ?? true) &&
-                        "animate-pulse",
+                      !(ringtone?.paused ?? true) &&
+                      "animate-pulse",
                     )}
                     onPress={() => changeCallStatus(false)}
                   >
@@ -867,6 +884,7 @@ export default function Home() {
             <ChatInput
               sendNewChatMessage={sendNewChatMessage}
               textareaRef={chatInputTextarea}
+              imgToUrl={imgToUrl}
             />
           </div>
         </main>
