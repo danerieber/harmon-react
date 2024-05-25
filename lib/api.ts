@@ -36,18 +36,26 @@ const api = {
       }),
     );
   },
-  async imageUpload(
+  async uploadImage(
     image: ArrayBuffer,
-    filetype: string,
-    stoken: string,
-  ): Promise<Response> {
-    return await fetch((await env()).httpEndpoint + "/image/name." + filetype, {
-      method: "POST",
-      headers: {
-        Authorization: `${stoken}`,
+    fileType: string,
+    sessionToken: string,
+  ): Promise<URL | undefined> {
+    const res = await fetch(
+      (await env()).httpEndpoint + "/image/name." + fileType,
+      {
+        method: "POST",
+        headers: {
+          Authorization: sessionToken,
+        },
+        body: image,
       },
-      body: image,
-    });
+    );
+    if (res.status === 200) {
+      return new URL(
+        (await env()).httpEndpoint + "/image/" + (await res.text()),
+      );
+    }
   },
   async getEndpoint() {
     return (await env()).httpEndpoint;

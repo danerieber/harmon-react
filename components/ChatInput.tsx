@@ -1,3 +1,4 @@
+import api from "@/lib/api";
 import { Send } from "@mui/icons-material";
 import { Button } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/input";
@@ -6,11 +7,11 @@ import { RefObject, useState } from "react";
 export default function ChatInput({
   sendNewChatMessage,
   textareaRef,
-  imgToUrl,
+  sessionToken,
 }: {
   sendNewChatMessage: (content: string) => void;
   textareaRef: RefObject<HTMLTextAreaElement>;
-  imgToUrl: (img: ArrayBuffer, filetype: string) => Promise<URL>;
+  sessionToken: string;
 }) {
   const [content, setContent] = useState("");
 
@@ -31,16 +32,22 @@ export default function ChatInput({
   async function handlePaste(e: React.ClipboardEvent) {
     const clipboardData = e.clipboardData;
     const file = clipboardData.files[0]; // Get only first file (if available)
-    if (file && file.type.startsWith('image/')) {
-      const imageBinary: ArrayBuffer = await readFileDataAsBase64(file);
-      const imageUrl = await imgToUrl(imageBinary, file.type.split('/')[1]);
+    if (file && file.type.startsWith("image/")) {
+      const imageBinary: ArrayBuffer = await readFileData(file);
+      const imageUrl = await api.uploadImage(
+        imageBinary,
+        file.type.split("/")[1],
+        sessionToken,
+      );
 
-      const newContent = `${textareaRef.current?.value}![Pasted Image](${imageUrl})`;
-      setContent(newContent);
+      if (imageUrl) {
+        const newContent = `${textareaRef.current?.value}![Pasted Image](${imageUrl})`;
+        setContent(newContent);
+      }
     }
   }
 
-  function readFileDataAsBase64(file: File): Promise<ArrayBuffer> {
+  function readFileData(file: File): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
 
