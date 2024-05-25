@@ -17,9 +17,9 @@ async function env() {
 }
 
 async function json(res: Promise<Response>) {
-  const j = await (await res).json();
-  console.log(j);
-  return j;
+  try {
+    return await (await res).json();
+  } catch (e) {}
 }
 
 const api = {
@@ -28,7 +28,7 @@ const api = {
   },
   async login(
     token: string,
-  ): Promise<{ sessionToken: string; userId: string; user: User }> {
+  ): Promise<{ sessionToken: string; userId: string; user: User } | undefined> {
     return await json(
       fetch((await env()).httpEndpoint + "/login", {
         method: "POST",

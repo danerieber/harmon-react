@@ -28,8 +28,16 @@ export default function Login({
   const [copiedTooltipIsOpen, setCopiedTooltipIsOpen] = useState(false);
   const [token, setToken] = useState("");
 
+  const [badInput, setBadInput] = useState(false);
+
   async function login() {
-    const { sessionToken, userId, user } = await api.login(token);
+    const data = await api.login(token);
+    if (!data) {
+      setBadInput(true);
+      setTimeout(() => setBadInput(false), 400);
+      return;
+    }
+    const { sessionToken, userId, user } = data;
     setSessionToken(sessionToken);
     setMyUserId(userId);
     setMyUser(user);
@@ -46,6 +54,7 @@ export default function Login({
           <Input
             fullWidth
             autoFocus
+            classNames={{ base: badInput ? "bad-input" : "" }}
             type="password"
             label="Token"
             value={token}

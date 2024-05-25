@@ -58,3 +58,26 @@ code {
 .bg-off-center {
   background-position: 50% calc(50% + 3rem) !important;
 }
+
+.bad-input {
+  animation: wiggle 0.2s infinite;
+}
+
+@keyframes wiggle {
+  0%,
+  25% {
+    transform: translateX(-2%);
+  }
+  25%,
+  50% {
+    transform: translateX(0%);
+  }
+  50%,
+  75% {
+    transform: translateX(2%);
+  }
+  75%,
+  100% {
+    transform: translateX(0%);
+  }
+}
