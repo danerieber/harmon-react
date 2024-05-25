@@ -164,10 +164,10 @@ export default function Home() {
   }, [sessionToken]);
 
   const changeCallStatus = useCallback(
-    (isInCall: boolean) => {
-      if (!peer) return;
-      setIsInCall(isInCall);
-      if (isInCall) {
+    (newValue: boolean) => {
+      if (!peer || newValue === isInCall) return;
+      setIsInCall(newValue);
+      if (newValue) {
         if (
           Object.values(users).find(
             (user) => user.presence === Presence.InCall,
@@ -235,6 +235,7 @@ export default function Home() {
     },
     [
       audioStreams,
+      isInCall,
       joinSound,
       leaveSound,
       localStream,
