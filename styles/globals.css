@@ -81,3 +81,10 @@ code {
     transform: translateX(0%);
   }
 }
+
+em-emoji-picker { 
+  --rgb-background: "transparent"; 
+  box-shadow: none; 
+  font-family: inherit; 
+  font: inherit; 
+}
