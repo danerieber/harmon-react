@@ -27,7 +27,7 @@ export default function ChatInput({
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
 
   const emojis = Object.values((data as EmojiMartData).emojis).filter(
-    (emoji) => emoji && emoji.skins && emoji.skins[0].native
+    (emoji) => emoji && emoji.skins && emoji.skins[0].native,
   );
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function ChatInput({
     if (userSearchQuery.length >= 1) {
       const filtered = userArray
         .filter((user) =>
-          user.username.toLowerCase().startsWith(userSearchQuery.toLowerCase())
+          user.username.toLowerCase().startsWith(userSearchQuery.toLowerCase()),
         )
         .slice(0, 4); // Limit to 4 users so we don't crowd the UI
 
@@ -61,7 +61,7 @@ export default function ChatInput({
     if (emojiSearchQuery.length >= 1) {
       const filtered = emojis
         .filter((emoji) =>
-          emoji.id.toLowerCase().startsWith(emojiSearchQuery.toLowerCase())
+          emoji.id.toLowerCase().startsWith(emojiSearchQuery.toLowerCase()),
         )
         .slice(0, 10); // Limit to 10 emojis so we don't crowd the UI
 
@@ -78,9 +78,6 @@ export default function ChatInput({
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    if (textareaRef.current) {
-      setCursorPosition(textareaRef.current.selectionStart);
-    }
     if (e.code === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -97,7 +94,7 @@ export default function ChatInput({
       const imageUrl = await api.uploadImage(
         imageBinary,
         file.type.split("/")[1],
-        sessionToken
+        sessionToken,
       );
 
       if (imageUrl) {
@@ -127,35 +124,34 @@ export default function ChatInput({
     });
   }
 
-  function handleUserChipClick(user: User) {
-    if (textareaRef.current) {
-      const atSymbolIndex = content.lastIndexOf("@", cursorPosition || undefined);
-      const newContent =
-        content.substring(0, atSymbolIndex) +
-        "@" +
-        user.username +
+  function applyAutoCompletion(
+    selector: string,
+    completion: string,
+    keepSelector = true,
+  ) {
+    const selectorIndex = content.lastIndexOf(
+      selector,
+      cursorPosition || undefined,
+    );
+    setContent(
+      content.substring(0, selectorIndex) +
+        (keepSelector ? selector : "") +
+        completion +
         " " +
-        content.substring(cursorPosition || content.length);
-      setContent(newContent);
-      setShowUserChips(false);
-      textareaRef.current.focus();
-      setCursorPosition((atSymbolIndex || 0) + user.username.length + 2);
-    }
+        content.substring(cursorPosition || content.length),
+    );
+    setCursorPosition((selectorIndex || 0) + completion.length + 2);
+    textareaRef.current?.focus();
+  }
+
+  function handleUserChipClick(user: User) {
+    applyAutoCompletion("@", user.username);
+    setShowUserChips(false);
   }
 
   function handleEmojiChipClick(emoji: any) {
-    if (textareaRef.current) {
-      const colonIndex = content.lastIndexOf(":", cursorPosition || undefined);
-      const newContent =
-        content.substring(0, colonIndex) +
-        emoji.skins[0].native +
-        " " +
-        content.substring(cursorPosition || content.length);
-      setContent(newContent);
-      setShowEmojiChips(false);
-      textareaRef.current.focus();
-      setCursorPosition((colonIndex || 0) + emoji.skins[0].native.length + 1);
-    }
+    applyAutoCompletion(":", emoji.skins[0].native, false);
+    setShowEmojiChips(false);
   }
 
   return (
