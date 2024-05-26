@@ -9,7 +9,7 @@ import MyUser from "@/components/MyUser";
 import UserElement from "@/components/UserElement";
 import Login from "@/components/login";
 import api from "@/lib/api";
-import emojis from "@/types/Emojis";
+import { randomEmoji } from "@/lib/emoji";
 import {
   Action,
   ChatMessage,
@@ -453,7 +453,7 @@ export default function Home() {
       send(Action.UpdateMyUserInfo, {
         ...myUser,
         presence: Presence.Online,
-        icon: myUser.icon || emojis[Math.floor(Math.random() * emojis.length)],
+        icon: myUser.icon || randomEmoji(),
       });
       send(Action.GetMySettings, {});
     }

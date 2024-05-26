@@ -6,7 +6,7 @@ import { Textarea } from "@nextui-org/input";
 import { RefObject, useState, useEffect } from "react";
 import SuggestionChips from "./SuggestionChips";
 import { getUsernameColor } from "@/styles/computed";
-import data, { EmojiMartData } from "@emoji-mart/data";
+import { emojis } from "@/lib/emoji";
 
 export default function ChatInput({
   sendNewChatMessage,
@@ -25,10 +25,6 @@ export default function ChatInput({
   const [showEmojiChips, setShowEmojiChips] = useState(false);
   const [filteredEmojis, setFilteredEmojis] = useState<any[]>([]);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
-
-  const emojis = Object.values((data as EmojiMartData).emojis).filter(
-    (emoji) => emoji && emoji.skins && emoji.skins[0].native,
-  );
 
   useEffect(() => {
     const userArray = Object.values(users);
@@ -70,7 +66,7 @@ export default function ChatInput({
     } else {
       setShowEmojiChips(false);
     }
-  }, [content, cursorPosition, users, emojis]);
+  }, [content, cursorPosition, users]);
 
   function sendMessage() {
     sendNewChatMessage(content);

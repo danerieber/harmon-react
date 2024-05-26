@@ -19,9 +19,9 @@ import { useCallback, useState } from "react";
 import { getUsernameColor, usernameColors } from "@/styles/computed";
 import Username from "./Username";
 import { Casino } from "@mui/icons-material";
-import data, { EmojiMartData } from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import { Switch } from "@nextui-org/switch";
+import { data, randomEmoji } from "@/lib/emoji";
 
 export default function UserSettingsModal({
   myUser,
@@ -52,11 +52,6 @@ export default function UserSettingsModal({
     send(Action.UpdateMySettings, editedSettings);
     onClose();
   }, [editUser, editedSettings, editedUser, onClose, send]);
-
-  function randomEmoji() {
-    const emojis = Object.values((data as EmojiMartData).emojis);
-    return emojis[Math.floor(Math.random() * emojis.length)].skins[0].native;
-  }
 
   return (
     <Modal isOpen={isOpen} onClose={saveOnClose} size="2xl">
