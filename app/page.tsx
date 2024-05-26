@@ -3,6 +3,7 @@
 import ChatInput from "@/components/ChatInput";
 import ChatMessageElement from "@/components/ChatMessageElement";
 import Environment from "@/components/Environment";
+import ImageModal from "@/components/ImageModal";
 import KeybindsModal from "@/components/KeybindsModal";
 import MyUser from "@/components/MyUser";
 import UserElement from "@/components/UserElement";
@@ -117,6 +118,14 @@ export default function Home() {
     onOpen: keybindsOnOpen,
     onClose: keybindsOnClose,
   } = useDisclosure();
+
+  // Image Modal
+  const {
+    isOpen: imageIsOpen,
+    onOpen: imageOnOpen,
+    onClose: imageOnClose,
+  } = useDisclosure();
+  const [imageModalSrc, setImageModalSrc] = useState<string>();
 
   // Refs
   const chatInputTextarea = useRef<HTMLTextAreaElement>(null);
@@ -867,6 +876,8 @@ export default function Home() {
                       msg={msg}
                       myUsername={myUser?.username ?? ""}
                       isDeveloper={users[msg.userId]?.isDeveloper}
+                      setImageModalSrc={setImageModalSrc}
+                      imageOnOpen={imageOnOpen}
                     />
                   )),
                 ),
@@ -885,6 +896,11 @@ export default function Home() {
           </div>
         </main>
         <KeybindsModal isOpen={keybindsIsOpen} onClose={keybindsOnClose} />
+        <ImageModal
+          isOpen={imageIsOpen}
+          onClose={imageOnClose}
+          imageSrc={imageModalSrc}
+        />
       </div>
     );
   } else {

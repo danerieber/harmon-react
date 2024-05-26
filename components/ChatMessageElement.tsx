@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { ChatMessage } from "@/types/types";
 import clsx from "clsx";
 import moment from "moment";
@@ -17,6 +18,8 @@ export default function ChatMessageElement({
   msg,
   myUsername,
   isDeveloper,
+  setImageModalSrc,
+  imageOnOpen,
 }: {
   icon: string;
   username: string;
@@ -25,6 +28,8 @@ export default function ChatMessageElement({
   msg: ChatMessage;
   myUsername: string;
   isDeveloper: boolean;
+  setImageModalSrc: (src: string | undefined) => void;
+  imageOnOpen: () => void;
 }) {
   function formatTimestamp(timestamp: string) {
     const tsFormatOtherYear = "D MMM Y [at] h:mm a";
@@ -78,6 +83,24 @@ export default function ChatMessageElement({
         <Markdown
           className={clsx("text-wrap break-words", !showUsername && "pl-5")}
           remarkPlugins={[remarkGfm, remarkBreaks, remarkGemoji]}
+          components={{
+            img(props) {
+              const { src, alt } = props;
+              return (
+                <>
+                  <img
+                    className="hover:cursor-pointer max-h-96 rounded-lg"
+                    src={src}
+                    alt={alt}
+                    onClick={() => {
+                      setImageModalSrc(src);
+                      imageOnOpen();
+                    }}
+                  ></img>
+                </>
+              );
+            },
+          }}
         >
           {msg.data.content}
         </Markdown>

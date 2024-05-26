@@ -33,9 +33,6 @@
   td {
     @apply border border-default-400 p-1;
   }
-  img {
-    @apply max-h-96 rounded-lg;
-  }
 }
 
 .presence-icon {
