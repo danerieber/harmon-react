@@ -128,6 +128,7 @@ export default function ChatInput({
     selector: string,
     completion: string,
     keepSelector = true,
+    preSpace = true,
   ) {
     const selectorIndex = content.lastIndexOf(
       selector,
@@ -135,6 +136,7 @@ export default function ChatInput({
     );
     setContent(
       content.substring(0, selectorIndex) +
+        (preSpace && content.at(selectorIndex - 1) !== " " ? " " : "") +
         (keepSelector ? selector : "") +
         completion +
         " " +
@@ -150,7 +152,7 @@ export default function ChatInput({
   }
 
   function handleEmojiChipClick(emoji: any) {
-    applyAutoCompletion(":", emoji.skins[0].native, false);
+    applyAutoCompletion(":", emoji.skins[0].native, false, false);
     setShowEmojiChips(false);
   }
 
