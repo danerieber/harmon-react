@@ -880,6 +880,7 @@ export default function Home() {
               sendNewChatMessage={sendNewChatMessage}
               textareaRef={chatInputTextarea}
               sessionToken={sessionToken}
+              users={users}
             />
           </div>
         </main>
