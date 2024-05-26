@@ -6,6 +6,8 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import Username from "./Username";
 import remarkGemoji from "remark-gemoji";
+import { Verified } from "@mui/icons-material";
+import { Tooltip } from "@nextui-org/tooltip";
 
 export default function ChatMessageElement({
   icon,
@@ -14,6 +16,7 @@ export default function ChatMessageElement({
   showUsername,
   msg,
   myUsername,
+  isDeveloper,
 }: {
   icon: string;
   username: string;
@@ -21,6 +24,7 @@ export default function ChatMessageElement({
   showUsername: boolean;
   msg: ChatMessage;
   myUsername: string;
+  isDeveloper: boolean;
 }) {
   function formatTimestamp(timestamp: string) {
     const tsFormatOtherYear = "D MMM Y [at] h:mm a";
@@ -58,7 +62,14 @@ export default function ChatMessageElement({
       <div className="flex flex-col min-w-0">
         {showUsername && (
           <p>
-            <Username color={usernameColor}>{username || "<unkown>"}</Username>
+            <Username color={usernameColor}>
+              {username || "<unkown>"}
+              {isDeveloper && (
+                <Tooltip disableAnimation closeDelay={0} content="Developer">
+                  <Verified className="text-primary-600 max-h-[1.1rem] pb-0.5" />
+                </Tooltip>
+              )}
+            </Username>
             <small className="text-default-500 pl-1">
               {formatTimestamp(msg.data.timestamp)}
             </small>

@@ -866,6 +866,7 @@ export default function Home() {
                       showUsername={showUsername}
                       msg={msg}
                       myUsername={myUser?.username ?? ""}
+                      isDeveloper={users[msg.userId]?.isDeveloper}
                     />
                   )),
                 ),

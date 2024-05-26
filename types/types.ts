@@ -50,4 +50,5 @@ export type User = {
   bannerUrl: string;
   usernameColor: string;
   changedUsername: boolean;
+  isDeveloper: boolean;
 };
