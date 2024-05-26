@@ -19,8 +19,8 @@ import { useCallback, useState } from "react";
 import { getUsernameColor, usernameColors } from "@/styles/computed";
 import Username from "./Username";
 import { Casino } from "@mui/icons-material";
-import data from '@emoji-mart/data'
-import Picker from '@emoji-mart/react'
+import data, { EmojiMartData } from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
 import { Switch } from "@nextui-org/switch";
 
 export default function UserSettingsModal({
@@ -53,12 +53,10 @@ export default function UserSettingsModal({
     onClose();
   }, [editUser, editedSettings, editedUser, onClose, send]);
 
-  const randomEmoji =
-    (data as any).emojis[
-      Object.keys((data as any).emojis)[
-        Math.floor(Math.random() * Object.keys((data as any).emojis).length)
-      ]
-    ].skins[0].native;
+  function randomEmoji() {
+    const emojis = Object.values((data as EmojiMartData).emojis);
+    return emojis[Math.floor(Math.random() * emojis.length)].skins[0].native;
+  }
 
   return (
     <Modal isOpen={isOpen} onClose={saveOnClose} size="2xl">
@@ -84,7 +82,7 @@ export default function UserSettingsModal({
                           onPress={() =>
                             setEditedUser({
                               ...editedUser,
-                              icon: randomEmoji
+                              icon: randomEmoji(),
                             })
                           }
                         >
@@ -98,8 +96,10 @@ export default function UserSettingsModal({
                             <Picker
                               previewPosition="none"
                               data={data}
-                              onEmojiSelect={(e: any) => setEditedUser({ ...editedUser, icon: e.native })}
-                            />;
+                              onEmojiSelect={(e: any) =>
+                                setEditedUser({ ...editedUser, icon: e.native })
+                              }
+                            />
                           </PopoverContent>
                         </Popover>
                       </div>
@@ -166,7 +166,7 @@ export default function UserSettingsModal({
                     <td>
                       <Switch
                         defaultSelected={
-                          editedSettings?.audioSettings?.autoGainControl === true
+                          editedSettings?.audioSettings.autoGainControl === true
                         }
                         onValueChange={(v) =>
                           mergeSettings({
@@ -184,7 +184,7 @@ export default function UserSettingsModal({
                     <td>
                       <Switch
                         defaultSelected={
-                          editedSettings?.audioSettings?.echoCancellation ===
+                          editedSettings?.audioSettings.echoCancellation ===
                           true
                         }
                         onValueChange={(v) =>
@@ -203,7 +203,7 @@ export default function UserSettingsModal({
                     <td>
                       <Switch
                         defaultSelected={
-                          editedSettings?.audioSettings?.noiseSuppression ===
+                          editedSettings?.audioSettings.noiseSuppression ===
                           true
                         }
                         onValueChange={(v) =>
