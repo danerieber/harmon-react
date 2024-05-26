@@ -1,4 +1,3 @@
-import emojis from "@/types/Emojis";
 import { Action, MySettings, User } from "@/types/types";
 import { Button } from "@nextui-org/button";
 import { Input } from "@nextui-org/input";
@@ -10,7 +9,6 @@ import {
   ModalHeader,
 } from "@nextui-org/modal";
 import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/popover";
-import { ScrollShadow } from "@nextui-org/scroll-shadow";
 import {
   Dropdown,
   DropdownItem,
@@ -21,6 +19,8 @@ import { useCallback, useState } from "react";
 import { getUsernameColor, usernameColors } from "@/styles/computed";
 import Username from "./Username";
 import { Casino } from "@mui/icons-material";
+import data, { EmojiMartData } from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
 import { Switch } from "@nextui-org/switch";
 
 export default function UserSettingsModal({
@@ -53,6 +53,11 @@ export default function UserSettingsModal({
     onClose();
   }, [editUser, editedSettings, editedUser, onClose, send]);
 
+  function randomEmoji() {
+    const emojis = Object.values((data as EmojiMartData).emojis);
+    return emojis[Math.floor(Math.random() * emojis.length)].skins[0].native;
+  }
+
   return (
     <Modal isOpen={isOpen} onClose={saveOnClose} size="2xl">
       <ModalContent>
@@ -77,9 +82,7 @@ export default function UserSettingsModal({
                           onPress={() =>
                             setEditedUser({
                               ...editedUser,
-                              icon: emojis[
-                                Math.floor(Math.random() * emojis.length)
-                              ],
+                              icon: randomEmoji(),
                             })
                           }
                         >
@@ -89,25 +92,14 @@ export default function UserSettingsModal({
                           <PopoverTrigger>
                             <Button>Choose</Button>
                           </PopoverTrigger>
-                          <PopoverContent className="max-w-96 max-h-96">
-                            <ScrollShadow size={20}>
-                              <div className="flex flex-wrap">
-                                {emojis.map((e, i) => (
-                                  <Button
-                                    key={`emoji_${i}`}
-                                    isIconOnly
-                                    className="text-xl"
-                                    size="sm"
-                                    variant="light"
-                                    onPress={() =>
-                                      setEditedUser({ ...editedUser, icon: e })
-                                    }
-                                  >
-                                    {e}
-                                  </Button>
-                                ))}
-                              </div>
-                            </ScrollShadow>
+                          <PopoverContent>
+                            <Picker
+                              previewPosition="none"
+                              data={data}
+                              onEmojiSelect={(e: any) =>
+                                setEditedUser({ ...editedUser, icon: e.native })
+                              }
+                            />
                           </PopoverContent>
                         </Popover>
                       </div>
