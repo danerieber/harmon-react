@@ -10,12 +10,12 @@ export default function ChatInput({
   sendNewChatMessage,
   textareaRef,
   sessionToken,
-  users
+  users,
 }: {
   sendNewChatMessage: (content: string) => void;
   textareaRef: RefObject<HTMLTextAreaElement>;
   sessionToken: string;
-  users: {[key: string]: User}
+  users: { [key: string]: User };
 }) {
   const [content, setContent] = useState("");
   const [showUserChips, setShowUserChips] = useState(false);
@@ -24,13 +24,16 @@ export default function ChatInput({
   useEffect(() => {
     const userArray = Object.values(users);
     const atSymbolIndex = content.lastIndexOf("@");
-    const searchQuery = atSymbolIndex !== -1 ? content.substring(atSymbolIndex + 1) : "";
-  
+    const searchQuery =
+      atSymbolIndex !== -1 ? content.substring(atSymbolIndex + 1) : "";
+
     if (searchQuery.length >= 1) {
       const filtered = userArray
-        .filter(user => user.username.toLowerCase().startsWith(searchQuery.toLowerCase()))
+        .filter((user) =>
+          user.username.toLowerCase().startsWith(searchQuery.toLowerCase()),
+        )
         .slice(0, 4); // Limit to 4 users so we don't crowd the UI
-  
+
       setFilteredUsers(filtered);
       setShowUserChips(filtered.length > 0);
     } else {
@@ -91,10 +94,12 @@ export default function ChatInput({
   }
 
   function handleChipClick(username: string) {
-    setContent(`${content.substring(0, content.lastIndexOf("@") + 1)}${username} `);
+    setContent(
+      `${content.substring(0, content.lastIndexOf("@") + 1)}${username} `,
+    );
     setShowUserChips(false);
     textareaRef.current?.focus();
-  }  
+  }
 
   return (
     <div className="flex flex-col w-full max-w-7xl gap-2 p-2 pt-0 xl:px-10">
