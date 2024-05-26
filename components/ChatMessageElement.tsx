@@ -9,6 +9,7 @@ import Username from "./Username";
 import remarkGemoji from "remark-gemoji";
 import { Verified } from "@mui/icons-material";
 import { Tooltip } from "@nextui-org/tooltip";
+import rehypeExternalLinks from "rehype-external-links";
 
 export default function ChatMessageElement({
   icon,
@@ -83,6 +84,7 @@ export default function ChatMessageElement({
         <Markdown
           className={clsx("text-wrap break-words", !showUsername && "pl-5")}
           remarkPlugins={[remarkGfm, remarkBreaks, remarkGemoji]}
+          rehypePlugins={[[rehypeExternalLinks, { target: "_blank" }]]}
           components={{
             img(props) {
               const { src, alt } = props;
