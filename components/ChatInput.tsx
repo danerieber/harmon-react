@@ -4,7 +4,9 @@ import { Send } from "@mui/icons-material";
 import { Button } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/input";
 import { RefObject, useState, useEffect } from "react";
-import UserChips from "./UserChips";
+import SuggestionChips from "./SuggestionChips";
+import { getUsernameColor } from "@/styles/computed";
+import data, { EmojiMartData } from "@emoji-mart/data";
 
 export default function ChatInput({
   sendNewChatMessage,
@@ -20,17 +22,33 @@ export default function ChatInput({
   const [content, setContent] = useState("");
   const [showUserChips, setShowUserChips] = useState(false);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [showEmojiChips, setShowEmojiChips] = useState(false);
+  const [filteredEmojis, setFilteredEmojis] = useState<any[]>([]);
+  const [cursorPosition, setCursorPosition] = useState<number | null>(null);
+
+  const emojis = Object.values((data as EmojiMartData).emojis).filter(
+    (emoji) => emoji && emoji.skins && emoji.skins[0].native,
+  );
 
   useEffect(() => {
     const userArray = Object.values(users);
-    const atSymbolIndex = content.lastIndexOf("@");
-    const searchQuery =
-      atSymbolIndex !== -1 ? content.substring(atSymbolIndex + 1) : "";
+    const atSymbolIndex = content.lastIndexOf("@", cursorPosition || undefined);
+    const colonIndex = content.lastIndexOf(":", cursorPosition || undefined);
+    const userSearchQuery =
+      atSymbolIndex !== -1 &&
+      (cursorPosition === null || atSymbolIndex < cursorPosition)
+        ? content.substring(atSymbolIndex + 1, cursorPosition || undefined)
+        : "";
+    const emojiSearchQuery =
+      colonIndex !== -1 &&
+      (cursorPosition === null || colonIndex < cursorPosition)
+        ? content.substring(colonIndex + 1, cursorPosition || undefined)
+        : "";
 
-    if (searchQuery.length >= 1) {
+    if (userSearchQuery.length >= 1) {
       const filtered = userArray
         .filter((user) =>
-          user.username.toLowerCase().startsWith(searchQuery.toLowerCase()),
+          user.username.toLowerCase().startsWith(userSearchQuery.toLowerCase()),
         )
         .slice(0, 4); // Limit to 4 users so we don't crowd the UI
 
@@ -39,7 +57,20 @@ export default function ChatInput({
     } else {
       setShowUserChips(false);
     }
-  }, [content, users]);
+
+    if (emojiSearchQuery.length >= 1) {
+      const filtered = emojis
+        .filter((emoji) =>
+          emoji.id.toLowerCase().startsWith(emojiSearchQuery.toLowerCase()),
+        )
+        .slice(0, 10); // Limit to 10 emojis so we don't crowd the UI
+
+      setFilteredEmojis(filtered);
+      setShowEmojiChips(filtered.length > 0);
+    } else {
+      setShowEmojiChips(false);
+    }
+  }, [content, cursorPosition, users, emojis]);
 
   function sendMessage() {
     sendNewChatMessage(content);
@@ -93,18 +124,57 @@ export default function ChatInput({
     });
   }
 
-  function handleChipClick(username: string) {
-    setContent(
-      `${content.substring(0, content.lastIndexOf("@") + 1)}${username} `,
+  function applyAutoCompletion(
+    selector: string,
+    completion: string,
+    keepSelector = true,
+    preSpace = true,
+  ) {
+    const selectorIndex = content.lastIndexOf(
+      selector,
+      cursorPosition || undefined,
     );
-    setShowUserChips(false);
+    setContent(
+      content.substring(0, selectorIndex) +
+        (preSpace && content.at(selectorIndex - 1) !== " " ? " " : "") +
+        (keepSelector ? selector : "") +
+        completion +
+        " " +
+        content.substring(cursorPosition || content.length),
+    );
+    setCursorPosition((selectorIndex || 0) + completion.length + 2);
     textareaRef.current?.focus();
+  }
+
+  function handleUserChipClick(user: User) {
+    applyAutoCompletion("@", user.username);
+    setShowUserChips(false);
+  }
+
+  function handleEmojiChipClick(emoji: any) {
+    applyAutoCompletion(":", emoji.skins[0].native, false, false);
+    setShowEmojiChips(false);
   }
 
   return (
     <div className="flex flex-col w-full max-w-7xl gap-2 p-2 pt-0 xl:px-10">
       {showUserChips && (
-        <UserChips users={filteredUsers} onChipClick={handleChipClick} />
+        <SuggestionChips
+          items={filteredUsers}
+          onChipClick={handleUserChipClick}
+          getItemKey={(user) => user.username}
+          getItemLabel={(user) => user.username}
+          getItemIcon={(user) => <div className="pl-1">{user.icon}</div>}
+          getItemClassNames={(user) => getUsernameColor(user.usernameColor)}
+        />
+      )}
+      {showEmojiChips && (
+        <SuggestionChips
+          items={filteredEmojis}
+          onChipClick={handleEmojiChipClick}
+          getItemKey={(emoji) => emoji.id}
+          getItemLabel={(emoji) => emoji.skins[0].native}
+        />
       )}
       <div className="flex w-full gap-2">
         <Textarea
@@ -116,7 +186,12 @@ export default function ChatInput({
           minRows={1}
           maxLength={2069}
           value={content}
-          onValueChange={setContent}
+          onValueChange={(value) => {
+            setContent(value);
+            if (textareaRef.current) {
+              setCursorPosition(textareaRef.current.selectionStart);
+            }
+          }}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
         ></Textarea>
