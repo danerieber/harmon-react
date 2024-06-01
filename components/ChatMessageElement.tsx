@@ -10,7 +10,7 @@ import remarkGemoji from "remark-gemoji";
 import { Edit, Reply, Verified } from "@mui/icons-material";
 import { Tooltip } from "@nextui-org/tooltip";
 import rehypeExternalLinks from "rehype-external-links";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, ButtonGroup } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/input";
 import mentions from "@/lib/mentions";
@@ -65,11 +65,11 @@ export default function ChatMessageElement({
     if (isEditing) {
       textareaRef.current?.focus();
       textareaRef.current?.setSelectionRange(
-        editedContent.length,
-        editedContent.length,
+        textareaRef.current?.value.length,
+        textareaRef.current?.value.length,
       );
     }
-  }, [editedContent.length, isEditing]);
+  }, [isEditing]);
 
   function editMessage() {
     if (editedContent !== content) {
