@@ -61,6 +61,7 @@ export default function Home() {
   const [chatMessagesHeight, setChatMessagesHeight] = useState(0);
   const [shouldScrollToEnd, setShouldScrollToEnd] = useState(true);
   const [shouldKeepScrollPos, setShouldKeepScrollPos] = useState(false);
+  const [editedMessages, setEditedMessages] = useState<ChatMessage[]>([]);
 
   // Users
   const [myUserId, setMyUserId] = useState("");
@@ -137,6 +138,7 @@ export default function Home() {
   // Wrapper to send websocket messages
   const send = useCallback(
     (action: Action, data: any) => {
+      console.log(data);
       socket?.send(JSON.stringify({ sessionToken, action, data }));
     },
     [sessionToken, socket],
@@ -460,7 +462,7 @@ export default function Home() {
   }, [myUser, send]);
 
   const handleSocketMessage = useCallback(
-    (e: MessageEvent<any>) => {
+    (e: MessageEvent<string>) => {
       // Sometimes the server batches mutilple messages together
       for (const msgText of e.data.split("\n")) {
         let msg: any;
@@ -470,6 +472,8 @@ export default function Home() {
 
         // Uncomment for debugging
         console.log(msg);
+
+        const byteLength = new TextEncoder().encode(msgText).length + 1;
 
         const { action, userId, data } = msg;
         if (action === Action.NewChatMessage) {
@@ -481,6 +485,7 @@ export default function Home() {
                 ...prev.slice(0, -1),
                 {
                   ...last,
+                  total: (last.total ?? 0) + byteLength,
                   messages: [...last.messages, msg],
                 },
               ];
@@ -509,7 +514,54 @@ export default function Home() {
           } else {
             setShouldKeepScrollPos(true);
           }
-          setChatMessageChunks((prev) => [data, ...prev]);
+          const normalMessages = [];
+          for (const chatMessage of data.messages) {
+            if (
+              !chatMessage.data.editForTimestamp ||
+              chatMessage.data.editForTimestamp === ""
+            ) {
+              normalMessages.push(chatMessage);
+            } else {
+              editedMessages.push(chatMessage);
+            }
+          }
+          data.messages = normalMessages;
+          setChatMessageChunks((prev) => {
+            const chunks: ChatMessageChunk[] = [data, ...prev];
+            const toDelete: Set<ChatMessage> = new Set([]);
+            for (const editedMessage of editedMessages) {
+              for (const chunk of chunks) {
+                if (
+                  chunk.messages[0] &&
+                  chunk.messages[0].data.timestamp >
+                    editedMessage.data.editForTimestamp
+                ) {
+                  continue;
+                }
+                if (
+                  chunk.messages.at(-1) &&
+                  chunk.messages.at(-1)!.data.timestamp <
+                    editedMessage.data.editForTimestamp
+                ) {
+                  continue;
+                }
+                const chatMessage = chunk.messages.find(
+                  (v) =>
+                    v.data.timestamp === editedMessage.data.editForTimestamp,
+                );
+                if (chatMessage) {
+                  chatMessage.data.content = editedMessage.data.content;
+                  chatMessage.edited = true;
+                  toDelete.add(editedMessage);
+                }
+              }
+            }
+            const newEditedMessages = editedMessages.filter(
+              (v) => !toDelete.has(v),
+            );
+            setEditedMessages(newEditedMessages);
+            return chunks;
+          });
           setLoadedMessages(true);
           setMessagesOffset(data.start);
         } else if (action === Action.UpdateMyUserInfo) {
@@ -576,11 +628,39 @@ export default function Home() {
           setMySettings(data);
         } else if (action === Action.UpdateMySettings) {
           setMySettings(data);
+        } else if (action === Action.EditChatMessage) {
+          setChatMessageChunks((prev) => {
+            const chunks = [...prev];
+            for (const chunk of chunks) {
+              if (
+                chunk.messages[0] &&
+                chunk.messages[0].data.timestamp > data.editForTimestamp
+              ) {
+                continue;
+              }
+              if (
+                chunk.messages.at(-1) &&
+                chunk.messages.at(-1)!.data.timestamp < data.editForTimestamp
+              ) {
+                continue;
+              }
+              const chatMessage = chunk.messages.find(
+                (v) => v.data.timestamp === data.editForTimestamp,
+              );
+              if (chatMessage) {
+                chatMessage.data.content = data.content;
+                chatMessage.edited = true;
+                chunk.total = (chunk.total ?? 0) + byteLength;
+              }
+            }
+            return chunks;
+          });
         }
       }
     },
     [
       chatMessageChunks.length,
+      editedMessages,
       isInCall,
       joinSound,
       leaveSound,
@@ -622,9 +702,27 @@ export default function Home() {
 
   const sendNewChatMessage = useCallback(
     (content: string) => {
-      let msg = content.trim();
-      if (msg) {
-        send(Action.NewChatMessage, { content });
+      let trimmed = content.trim();
+      if (trimmed) {
+        send(Action.NewChatMessage, {
+          chatId: "global",
+          data: { content: trimmed },
+        });
+      }
+    },
+    [send],
+  );
+
+  const editChatMessage = useCallback(
+    (chunk: ChatMessageChunk, message: ChatMessage, content: string) => {
+      let trimmed = content.trim();
+      if (trimmed) {
+        send(Action.EditChatMessage, {
+          chatId: "global",
+          start: chunk.start,
+          total: chunk.total,
+          data: { content: trimmed, editForTimestamp: message.data.timestamp },
+        });
       }
     },
     [send],
@@ -878,6 +976,10 @@ export default function Home() {
                       isDeveloper={users[msg.userId]?.isDeveloper}
                       setImageModalSrc={setImageModalSrc}
                       imageOnOpen={imageOnOpen}
+                      isOwned={msg.userId === myUserId}
+                      editChatMessage={(content) =>
+                        editChatMessage(chunk, msg, content)
+                      }
                     />
                   )),
                 ),

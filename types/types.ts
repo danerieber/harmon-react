@@ -10,14 +10,18 @@ export enum Action {
   JoinCall,
   GetMySettings,
   UpdateMySettings,
+  EditChatMessage,
 }
 
 export type ChatMessage = {
+  chatId: string;
   userId: string;
   data: {
     content: string;
-    timestamp: string;
+    timestamp: number;
+    editForTimestamp: number;
   };
+  edited?: boolean;
 };
 
 export type ChatMessageChunk = {
