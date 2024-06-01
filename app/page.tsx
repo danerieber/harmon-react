@@ -49,8 +49,10 @@ export default function Home() {
   // Loading
   const [socket, setSocket] = useState<WebSocket>();
   const [sessionToken, setSessionToken] = useState("");
+  const [opened, setOpened] = useState(false);
   const [connected, setConnected] = useState(false);
   const [loadedMessages, setLoadedMessages] = useState(false);
+  const [error, setError] = useState<string | undefined>();
 
   // Messages
   const [messagesOffset, setMessagesOffset] = useState(0);
@@ -138,7 +140,6 @@ export default function Home() {
   // Wrapper to send websocket messages
   const send = useCallback(
     (action: Action, data: any) => {
-      console.log(data);
       socket?.send(JSON.stringify({ sessionToken, action, data }));
     },
     [sessionToken, socket],
@@ -449,7 +450,7 @@ export default function Home() {
 
   // Send some initial actions upon connecting
   const handleSocketOnOpen = useCallback(() => {
-    if (myUser) {
+    if (myUser && !connected) {
       send(Action.GetChatMessages, { chatId: "global", total: chunkSize });
       send(Action.GetAllUsers, {});
       send(Action.UpdateMyUserInfo, {
@@ -459,7 +460,7 @@ export default function Home() {
       });
       send(Action.GetMySettings, {});
     }
-  }, [myUser, send]);
+  }, [connected, myUser, send]);
 
   const handleSocketMessage = useCallback(
     (e: MessageEvent<string>) => {
@@ -471,7 +472,7 @@ export default function Home() {
         } catch (e) {}
 
         // Uncomment for debugging
-        console.log(msg);
+        // console.log(msg);
 
         const byteLength = new TextEncoder().encode(msgText).length + 1;
 
@@ -675,16 +676,23 @@ export default function Home() {
 
   // Register websocket event handler
   useEffect(() => {
-    if (!socket || !handleSocketMessage) return;
+    if (!socket) return;
     socket.onopen = () => {
       handleSocketOnOpen();
       setConnected(true);
+      setOpened(true);
+      setError(undefined);
     };
     socket.onmessage = handleSocketMessage;
+    socket.onclose = () => {
+      setConnected(false);
+      setError("Connection problem");
+      setTimeout(() => api.socket().then((ws) => setSocket(ws)), 5000);
+    };
   }, [handleSocketMessage, handleSocketOnOpen, socket]);
 
-  // Request user info for unknown userIds upon loading new message chunks
-  useEffect(() => {
+  const loadUnknownUsers = useCallback(() => {
+    if (!connected) return;
     const requested = new Set();
     for (const { userId } of chatMessageChunks.at(-1)?.messages ?? []) {
       if (!requested.has(userId) && !(userId in users)) {
@@ -692,7 +700,12 @@ export default function Home() {
         send(Action.RequestUserInfo, { userId });
       }
     }
-  }, [chatMessageChunks, chatMessageChunks.length, send, users]);
+  }, [chatMessageChunks, connected, send, users]);
+
+  // Request user info for unknown userIds upon loading new message chunks
+  useEffect(() => {
+    loadUnknownUsers();
+  }, [loadUnknownUsers, chatMessageChunks.length]);
 
   // Sync myUser with entry in users dictionary
   useEffect(() => {
@@ -758,7 +771,7 @@ export default function Home() {
     }
   }, [loadedMessages, messagesOffset, send]);
 
-  if (sessionToken && connected) {
+  if (sessionToken && opened) {
     return (
       <div className="flex w-full">
         <div className="bg-content2 flex flex-col min-w-[270px] max-w-[270px]">
@@ -922,7 +935,12 @@ export default function Home() {
             </div>
           )}
           {myUser && (
-            <MyUser myUser={myUser} mySettings={mySettings} send={send} />
+            <MyUser
+              myUser={myUser}
+              mySettings={mySettings}
+              send={send}
+              error={error}
+            />
           )}
         </div>
         <main className="bg-content3 flex flex-col min-w-0 w-full">

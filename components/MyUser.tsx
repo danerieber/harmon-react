@@ -15,10 +15,12 @@ export default function MyUser({
   myUser,
   mySettings,
   send,
+  error,
 }: {
   myUser: User;
   mySettings: MySettings | undefined;
   send: (action: Action, data: any) => void;
+  error?: string;
 }) {
   const {
     isOpen: settingsIsOpen,
@@ -107,7 +109,7 @@ export default function MyUser({
           </p>
         )}
         <div className="flex gap-2">
-          <PresenceIcon presence={myUser.presence} />
+          <PresenceIcon presence={myUser.presence} error={error} />
           {isEditingStatus ? (
             <Input
               ref={editStatusInput}
