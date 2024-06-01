@@ -1,23 +1,29 @@
 import api from "@/lib/api";
-import { User } from "@/types/types";
-import { Send } from "@mui/icons-material";
+import { ChatMessage, User } from "@/types/types";
+import { Close, Send } from "@mui/icons-material";
 import { Button } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/input";
 import { RefObject, useState, useEffect } from "react";
 import SuggestionChips from "./SuggestionChips";
 import { getUsernameColor } from "@/styles/computed";
 import { emojis } from "@/lib/emoji";
+import { Tooltip } from "@nextui-org/tooltip";
+import mentions from "@/lib/mentions";
 
 export default function ChatInput({
   sendNewChatMessage,
   textareaRef,
   sessionToken,
   users,
+  replyingTo,
+  setReplyingTo,
 }: {
   sendNewChatMessage: (content: string) => void;
   textareaRef: RefObject<HTMLTextAreaElement>;
   sessionToken: string;
   users: { [key: string]: User };
+  replyingTo?: ChatMessage;
+  setReplyingTo: (replyingTo?: ChatMessage) => void;
 }) {
   const [content, setContent] = useState("");
   const [showUserChips, setShowUserChips] = useState(false);
@@ -25,6 +31,12 @@ export default function ChatInput({
   const [showEmojiChips, setShowEmojiChips] = useState(false);
   const [filteredEmojis, setFilteredEmojis] = useState<any[]>([]);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (replyingTo) {
+      textareaRef.current?.focus();
+    }
+  }, [replyingTo, textareaRef]);
 
   useEffect(() => {
     const userArray = Object.values(users);
@@ -71,6 +83,7 @@ export default function ChatInput({
   function sendMessage() {
     sendNewChatMessage(content);
     setContent("");
+    setReplyingTo();
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -172,7 +185,20 @@ export default function ChatInput({
           getItemLabel={(emoji) => emoji.skins[0].native}
         />
       )}
-      <div className="flex w-full gap-2">
+      <div className="flex w-full gap-2 items-end">
+        {replyingTo && (
+          <Tooltip disableAnimation closeDelay={0} content="Cancel Reply">
+            <Button
+              isIconOnly
+              size="md"
+              variant="light"
+              className="text-default-500"
+              onPress={() => setReplyingTo()}
+            >
+              <Close />
+            </Button>
+          </Tooltip>
+        )}
         <Textarea
           fullWidth
           ref={textareaRef}
@@ -182,6 +208,14 @@ export default function ChatInput({
           minRows={1}
           maxLength={2069}
           value={content}
+          label={
+            replyingTo
+              ? `Reply to ${
+                  users[replyingTo.userId]?.username ?? "<unknown>"
+                }: ${mentions.subUserIds(replyingTo.data.content, users)}`
+              : ""
+          }
+          labelPlacement="outside"
           onValueChange={(value) => {
             setContent(value);
             if (textareaRef.current) {

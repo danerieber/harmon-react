@@ -16,11 +16,7 @@ export enum Action {
 export type ChatMessage = {
   chatId: string;
   userId: string;
-  data: {
-    content: string;
-    timestamp: number;
-    editForTimestamp: number;
-  };
+  data: ChatMessageData;
   edited?: boolean;
 };
 
@@ -28,6 +24,14 @@ export type ChatMessageChunk = {
   start?: number;
   total?: number;
   messages: ChatMessage[];
+};
+
+export type ChatMessageData = {
+  content: string;
+  timestamp: number;
+  editForTimestamp: number;
+  replyToUserId?: string;
+  replyTo?: ChatMessageData;
 };
 
 export type IsTalking = {

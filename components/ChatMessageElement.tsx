@@ -7,13 +7,14 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import Username from "./Username";
 import remarkGemoji from "remark-gemoji";
-import { Edit, Verified } from "@mui/icons-material";
+import { Edit, Reply, Verified } from "@mui/icons-material";
 import { Tooltip } from "@nextui-org/tooltip";
 import rehypeExternalLinks from "rehype-external-links";
 import { useEffect, useRef, useState } from "react";
 import { Button, ButtonGroup } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/input";
 import mentions from "@/lib/mentions";
+import { getUsernameColor } from "@/styles/computed";
 
 export default function ChatMessageElement({
   icon,
@@ -29,6 +30,7 @@ export default function ChatMessageElement({
   isOwned,
   editChatMessage,
   users,
+  onReply,
 }: {
   icon: string;
   username: string;
@@ -43,6 +45,7 @@ export default function ChatMessageElement({
   isOwned: boolean;
   editChatMessage: (content: string) => void;
   users: Record<string, User>;
+  onReply: () => void;
 }) {
   const [content, setContent] = useState(msg.data.content);
 
@@ -106,10 +109,20 @@ export default function ChatMessageElement({
     return mentions.isMentioned(msg.data.content, myUserId);
   }
 
+  function processReplyContent(content: string) {
+    content = mentions.subUserIds(content, users);
+    const lines = content.split("\n");
+    content = lines.slice(0, 3).join("\n");
+    if (lines.length > 3) {
+      content += "...";
+    }
+    return content;
+  }
+
   return (
     <div
       className={clsx(
-        "relative w-full max-w-7xl px-2 xl:px-10",
+        "relative w-full max-w-7xl px-2 xl:px-10 pb-0.5",
         isHovering && "bg-content4",
         isMentioned() && (isHovering ? "bg-mentioned-600" : "bg-mentioned"),
         showUsername && "mt-3",
@@ -136,6 +149,20 @@ export default function ChatMessageElement({
                 {formatTimestamp(msg.data.timestamp)}
               </small>
             </p>
+          )}
+          {msg.data.replyToUserId && msg.data.replyTo && (
+            <div
+              className={clsx(
+                "flex text-xs opacity-55 whitespace-pre overflow-hidden text-ellipsis py-1",
+                !showUsername && "pl-5",
+              )}
+            >
+              <Reply className="max-w-3 max-h-4 mr-1" />{" "}
+              <Username color={users[msg.data.replyToUserId]?.usernameColor}>
+                {users[msg.data.replyToUserId]?.username ?? "<unknown>"}
+              </Username>
+              : <div>{processReplyContent(msg.data.replyTo.content)}</div>
+            </div>
           )}
           {isEditing ? (
             <Textarea
@@ -199,10 +226,17 @@ export default function ChatMessageElement({
         <div className="absolute top-[-1rem] right-[1rem]">
           <ButtonGroup size="sm">
             {isOwned && (
-              <Button isIconOnly onPress={() => setIsEditing(!isEditing)}>
-                <Edit />
-              </Button>
+              <Tooltip disableAnimation closeDelay={0} content="Edit">
+                <Button isIconOnly onPress={() => setIsEditing(!isEditing)}>
+                  <Edit />
+                </Button>
+              </Tooltip>
             )}
+            <Tooltip disableAnimation closeDelay={0} content="Reply">
+              <Button isIconOnly onPress={onReply}>
+                <Reply />
+              </Button>
+            </Tooltip>
           </ButtonGroup>
         </div>
       )}

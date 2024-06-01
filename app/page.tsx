@@ -66,6 +66,9 @@ export default function Home() {
   const [shouldKeepScrollPos, setShouldKeepScrollPos] = useState(false);
   const [editedMessages, setEditedMessages] = useState<ChatMessage[]>([]);
 
+  // Input
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | undefined>();
+
   // Users
   const [myUserId, setMyUserId] = useState("");
   const [mySettings, setMySettings] = useState<MySettings | undefined>();
@@ -731,11 +734,17 @@ export default function Home() {
       if (content) {
         send(Action.NewChatMessage, {
           chatId: "global",
-          data: { content },
+          data: {
+            content,
+            ...(replyingTo && {
+              replyToUserId: replyingTo.userId,
+              replyTo: replyingTo.data,
+            }),
+          },
         });
       }
     },
-    [processMessageContent, send],
+    [processMessageContent, replyingTo, send],
   );
 
   const editChatMessage = useCallback(
@@ -1012,6 +1021,7 @@ export default function Home() {
                       editChatMessage={(content) =>
                         editChatMessage(chunk, msg, content)
                       }
+                      onReply={() => setReplyingTo(msg)}
                     />
                   )),
                 ),
@@ -1026,6 +1036,8 @@ export default function Home() {
               textareaRef={chatInputTextarea}
               sessionToken={sessionToken}
               users={users}
+              replyingTo={replyingTo}
+              setReplyingTo={setReplyingTo}
             />
           </div>
         </main>
