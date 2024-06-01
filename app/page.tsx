@@ -10,6 +10,7 @@ import UserElement from "@/components/UserElement";
 import Login from "@/components/login";
 import api from "@/lib/api";
 import { randomEmoji } from "@/lib/emoji";
+import mentions from "@/lib/mentions";
 import {
   Action,
   ChatMessage,
@@ -713,32 +714,43 @@ export default function Home() {
     setUsers((prev) => ({ ...prev, ...{ [myUserId]: myUser } }));
   }, [myUser, myUserId]);
 
+  const processMessageContent = useCallback(
+    (content: string) => {
+      content = content.trim();
+      if (content) {
+        content = mentions.subUsernames(content, users);
+      }
+      return content;
+    },
+    [users],
+  );
+
   const sendNewChatMessage = useCallback(
     (content: string) => {
-      let trimmed = content.trim();
-      if (trimmed) {
+      content = processMessageContent(content);
+      if (content) {
         send(Action.NewChatMessage, {
           chatId: "global",
-          data: { content: trimmed },
+          data: { content },
         });
       }
     },
-    [send],
+    [processMessageContent, send],
   );
 
   const editChatMessage = useCallback(
     (chunk: ChatMessageChunk, message: ChatMessage, content: string) => {
-      let trimmed = content.trim();
-      if (trimmed) {
+      content = processMessageContent(content);
+      if (content) {
         send(Action.EditChatMessage, {
           chatId: "global",
           start: chunk.start,
           total: chunk.total,
-          data: { content: trimmed, editForTimestamp: message.data.timestamp },
+          data: { content, editForTimestamp: message.data.timestamp },
         });
       }
     },
-    [send],
+    [processMessageContent, send],
   );
 
   function isInViewport(ref: RefObject<HTMLElement>) {
@@ -990,6 +1002,8 @@ export default function Home() {
                       usernameColor={users[msg.userId]?.usernameColor}
                       showUsername={showUsername}
                       msg={msg}
+                      users={users}
+                      myUserId={myUserId}
                       myUsername={myUser?.username ?? ""}
                       isDeveloper={users[msg.userId]?.isDeveloper}
                       setImageModalSrc={setImageModalSrc}

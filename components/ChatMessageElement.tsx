@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { ChatMessage } from "@/types/types";
+import { ChatMessage, User } from "@/types/types";
 import clsx from "clsx";
 import moment from "moment";
 import Markdown from "react-markdown";
@@ -13,6 +13,7 @@ import rehypeExternalLinks from "rehype-external-links";
 import { useEffect, useRef, useState } from "react";
 import { Button, ButtonGroup } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/input";
+import mentions from "@/lib/mentions";
 
 export default function ChatMessageElement({
   icon,
@@ -20,25 +21,31 @@ export default function ChatMessageElement({
   usernameColor,
   showUsername,
   msg,
+  myUserId,
   myUsername,
   isDeveloper,
   setImageModalSrc,
   imageOnOpen,
   isOwned,
   editChatMessage,
+  users,
 }: {
   icon: string;
   username: string;
   usernameColor: string;
   showUsername: boolean;
   msg: ChatMessage;
+  myUserId: string;
   myUsername: string;
   isDeveloper: boolean;
   setImageModalSrc: (src: string | undefined) => void;
   imageOnOpen: () => void;
   isOwned: boolean;
   editChatMessage: (content: string) => void;
+  users: Record<string, User>;
 }) {
+  const [content, setContent] = useState(msg.data.content);
+
   const [isHovering, setIsHovering] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState("");
@@ -46,8 +53,10 @@ export default function ChatMessageElement({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setEditedContent(msg.data.content);
-  }, [msg.data.content]);
+    const subbed = mentions.subUserIds(msg.data.content, users);
+    setContent(subbed);
+    setEditedContent(subbed);
+  }, [msg.data.content, users]);
 
   useEffect(() => {
     if (isEditing) {
@@ -60,7 +69,7 @@ export default function ChatMessageElement({
   }, [editedContent.length, isEditing]);
 
   function editMessage() {
-    if (editedContent !== msg.data.content) {
+    if (editedContent !== content) {
       editChatMessage(editedContent);
     }
     setIsEditing(false);
@@ -94,12 +103,7 @@ export default function ChatMessageElement({
 
   function isMentioned() {
     if (!myUsername) return false;
-    const u = myUsername;
-    const mentionRegex = new RegExp(
-      `^@${u}$|^@${u}\\s+.*$|^.*\\s+@${u}\\s+.*|^.*\\s+@${u}$`,
-      "sg",
-    );
-    return mentionRegex.test(msg.data.content);
+    return mentions.isMentioned(msg.data.content, myUserId);
   }
 
   return (
@@ -175,7 +179,7 @@ export default function ChatMessageElement({
                   },
                 }}
               >
-                {msg.data.content}
+                {content}
               </Markdown>
               {msg.edited && (
                 <p
